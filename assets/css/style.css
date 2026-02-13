@@ -1,0 +1,3355 @@
+﻿html {
+  scrollbar-gutter: stable;
+}
+* 
+{
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Times New Roman", serif;
+}
+
+body {
+  background: white;
+  color: black;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: white;
+  padding: 10px 40px 8px 40px;
+  box-shadow:
+    0 1px 0 rgba(0,0,0,0.02),
+    0 12px 24px rgba(0,0,0,0.06);
+}
+
+.nav {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.nav-left {
+  text-align: left;
+  padding-left: 40px;
+}
+
+.nav-logo {
+  text-align: center;
+}
+
+.nav-right {
+  text-align: right;
+  padding-right: 40px;
+}
+
+.nav a {
+  text-decoration: none;
+  color: black;
+  margin-right: 22px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  position: relative;
+  padding-bottom: 6px;
+}
+
+/* Trait page active */
+.nav a.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: black;
+}
+
+.logo-header {
+  height: 38px;
+  object-fit: contain;
+}
+
+.hero {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+  margin-bottom: 60px;
+}
+
+.hero img {
+  width: 85%;
+  max-width: 1300px;
+  height: 675px;
+  object-fit: cover;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 60px;
+  padding: 80px;
+}
+
+.home-item {
+  text-decoration: none;
+  color: black;
+}
+
+.home-item img {
+  width: 100%;
+  height: 1000px;
+  object-fit: cover;
+}
+
+.home-item p {
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.home-item span {
+  font-size: 12px;
+}
+
+.banners {
+  width: 100%;
+  margin-bottom: 80px;
+}
+
+.banner {
+  position: relative;
+  display: block;
+  width: 85%;
+  max-width: 1400px;
+  height: 220px;
+  margin: 40px auto;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(0,0,0,0.75), rgba(0,0,0,0.1));
+  z-index: 1;
+}
+
+.banner-text {
+  position: absolute;
+  left: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  z-index: 2;
+}
+
+.banner-text h2 {
+  font-size: 32px;
+  letter-spacing: 2px;
+}
+
+.banner-text p {
+  font-size: 18px;
+}
+
+.categories {
+  text-align: center;
+  padding: 60px 0 40px;
+  margin-top: -60px;
+}
+
+.categories-level {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 30px;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.categories-level span {
+  cursor: pointer;
+  position: relative;
+  padding-bottom: 6px;
+}
+
+.categories-level span::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  height: 1px;
+  background: black;
+  transition: 0.3s ease;
+}
+
+.categories-level span:hover::after,
+.categories-level .active::after {
+  width: 100%;
+}
+
+.categories-divider {
+  width: 1200px;
+  height: 1px;
+  background: black;
+  margin: 30px auto 60px;
+  opacity: 0.4;
+}
+
+.collection {
+  padding: 80px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 80px 40px;
+}
+
+.item {
+  text-decoration: none;
+  color: black;
+}
+
+.item img {
+  width: 100%;
+  height: 800px;
+  object-fit: cover;
+  margin-bottom: 20px;
+}
+
+.item p {
+  font-size: 14px;
+}
+
+.item span {
+  font-size: 12px;
+}
+
+.product-page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  padding: 80px 80px 80px 165px;
+}
+
+/* =========================
+   CARROUSEL MOBILE
+========================= */
+
+.carousel-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background-color: #f8f8f8;
+}
+
+.carousel-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.4s ease;
+}
+
+.carousel-nav {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.carousel-counter {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: rgba(0, 0, 0, 0.6);
+  font-family: "Times New Roman", serif;
+  padding: 6px 10px;
+}
+
+.carousel-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.carousel-dot:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.carousel-dot.active {
+  background-color: rgba(0, 0, 0, 0.8);
+  width: 8px;
+  height: 8px;
+}
+
+.mobile-only {
+  display: none;
+}
+
+/* =========================
+   IMAGES PRODUIT DESKTOP
+========================= */
+
+.images-container {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.desktop-product-image {
+  width: 100%;
+  display: block;
+}
+
+/* =========================
+   PARFUM — MISE EN PAGE
+========================= */
+
+.product-page.parfum {
+  grid-template-columns: 1.2fr 0.8fr;   /* image plus importante */
+  gap: 120px;
+  padding-top: 140px;
+}
+
+.product-page.parfum .image img {
+  height: 85vh;
+  object-fit: cover;
+}
+
+.product-page.parfum .info {
+  padding-top: 120px;   /* le texte descend = rituel */
+}
+
+.product-page.parfum .description {
+  font-size: 13.5px;
+  line-height: 1.8;
+  max-width: 360px;
+  margin-bottom: 48px;   /* espace plus aéré */
+  opacity: 0.85;
+  color: #1a1a1a;
+}
+
+
+
+.image img {
+  width: 100%;
+}
+
+.info h1 {
+  font-size: 28px;
+}
+
+.price {
+  margin: 20px 0 40px;
+}
+
+.description {
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 400px;
+  margin-bottom: 40px; /* ← augmente l’espace avant “Taille” */
+}
+
+
+.size {
+  border-bottom: 1px solid black;
+  padding: 12px 0;
+  width: 200px;
+  cursor: pointer;
+}
+
+.size.selected {
+  font-weight: bold;
+}
+
+.cart-page {
+  padding: 80px;
+}
+
+.cart-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  padding: 20px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.banner,
+.home-item img {
+  transition: box-shadow 0.4s ease, filter 0.4s ease;
+}
+
+.banner:hover,
+.home-item img:hover {
+  box-shadow:
+    0 15px 60px rgba(255,255,255,0.45),
+    0 0 40px rgba(255,255,255,0.15);
+  filter: brightness(1.1) contrast(1.05);
+}
+
+.add-to-cart {
+  margin-top: 50px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid black;
+  font-size: 14px;
+  padding: 12px 0;
+  cursor: pointer;
+}
+
+.cart-page {
+  padding: 80px;
+}
+
+.cart-page h1 {
+  margin-bottom: 40px;
+  font-size: 28px;
+}
+
+.cart-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  padding: 20px 0;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.cart-item button {
+  background: none;
+  border: none;
+  border-bottom: 1px solid black;
+  cursor: pointer;
+}
+
+.cart-footer {
+  margin-top: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sizes {
+  margin-top: 20px;   /* espace entre le texte et le bloc tailles */
+}
+
+.sizes p {
+  margin-bottom: 14px;  /* espace entre “Taille” et la première taille */
+}
+
+.description {
+  font-style: italic;
+  opacity: 0.85;
+}
+
+.categories-level.hidden {
+  display: none;
+}
+
+/* NIVEAU 1 — catégories racine */
+#level1 span {
+  font-size: 13px;
+  letter-spacing: 3px;
+  font-weight: 600;
+}
+
+/* NIVEAU 2 — genre */
+#level2 span {
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 400;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* NIVEAU 2 actif */
+#level2 span.active {
+  opacity: 1;
+}
+
+#level2.open span {
+  cursor: pointer;
+}
+
+/* NIVEAU 3 — type de pièce */
+#level3 span {
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 300;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* NIVEAU 3 actif */
+#level3 span.active {
+  opacity: 1;
+}
+
+#level3.open span {
+  cursor: pointer;
+}
+
+#level1 { margin-bottom: 30px; }
+#level2 { margin-bottom: 22px; }
+#level3 { margin-bottom: 10px; }
+
+.collections-page {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 120px;
+}
+
+.collection-link {
+  font-size: 36px;
+  letter-spacing: 3px;
+  text-decoration: none;
+  color: black;
+  position: relative;
+  transition: opacity 0.3s ease;
+}
+
+.collection-link::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -18px;
+  width: 0%;
+  height: 1px;
+  background: black;
+  transform: translateX(-50%);
+  transition: 0.4s ease;
+}
+
+.collection-link:hover::after {
+  width: 60%;
+}
+
+.collection-link:hover {
+  opacity: 0.7;
+}
+
+/* =========================
+   LOOKBOOK
+========================= */
+
+.lookbook-page {
+  padding-top: 120px;
+  padding-bottom: 120px;
+}
+
+.lookbook-title {
+  text-align: center;
+  margin-bottom: 120px;
+}
+
+.lookbook-title p {
+  font-size: 12px;
+  letter-spacing: 3px;
+  opacity: 0.6;
+  margin-bottom: 20px;
+}
+
+.lookbook-title h1 {
+  font-size: 48px;
+  letter-spacing: 4px;
+}
+
+.lookbook-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 60px;
+  padding: 0 80px;
+}
+
+.lookbook-grid img {
+  width: 100%;
+  height: 900px;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+}
+
+/* =========================
+   LIGHTBOX
+========================= */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 5000;
+}
+
+.lightbox img {
+  max-width: 85vw;
+  max-height: 85vh;
+  object-fit: contain;
+}
+
+/* Navigation centrée */
+
+.lb-nav {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  color: white;
+  z-index: 20;
+  font-family: "Times New Roman", serif;
+}
+
+.lb-arrow {
+  font-size: 28px;
+  cursor: pointer;
+  opacity: 0.7;
+  user-select: none;
+  transition: 0.2s ease;
+}
+
+.lb-arrow:hover {
+  opacity: 1;
+}
+
+.lb-counter {
+  font-size: 14px;
+  letter-spacing: 3px;
+  min-width: 80px;
+  text-align: center;
+  opacity: 0.8;
+}
+
+/* Animation des sous-catégories */
+
+#level2,
+#level3 {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition:
+    max-height 0.6s cubic-bezier(.4,0,.2,1),
+    opacity 0.4s ease,
+    transform 0.4s ease;
+  pointer-events: none;
+}
+
+#level2.open,
+#level3.open {
+  max-height: 200px;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+/* =========================
+   PARFUM — VERSION PLUS INTIME
+========================= */
+
+.product-page.parfum {
+  padding: 100px 120px;
+  gap: 60px;
+}
+
+/* Image plus contenue */
+.product-page.parfum .image img {
+  max-width: 520px;
+}
+
+/* Bloc texte plus étroit */
+.product-page.parfum .info {
+  max-width: 420px;
+}
+
+/* Titre plus discret */
+.product-page.parfum .info h1 {
+  font-size: 28px;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  font-weight: 400;
+}
+
+.parfum-type {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+
+/* Prix plus fin */
+.product-page.parfum .price {
+  font-size: 15px;
+  margin: 20px 0 40px;
+  opacity: 0.8;
+  font-weight: 400;
+}
+
+/* Description plus proche du texte */
+.product-page.parfum .description {
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 360px;
+}
+
+/* Formats plus délicats */
+.product-page.parfum .sizes {
+  margin-top: 0;
+  margin-bottom: 50px;
+}
+
+.product-page.parfum .sizes p {
+  font-size: 10.5px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-bottom: 16px;
+}
+
+.product-page.parfum .size {
+  width: 100%;
+  max-width: 200px;
+  font-size: 13px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.product-page.parfum .size:hover {
+  opacity: 0.7;
+}
+
+.product-page.parfum .size.selected {
+  font-weight: 600;
+  opacity: 1;
+}
+
+/* Bouton plus fin */
+.product-page.parfum .add-to-cart {
+  margin-top: 0;
+  margin-bottom: 60px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 14px 0;
+}
+/* Centrer visuellement l’image du parfum */
+.product-page.parfum .image {
+  display: flex;
+  justify-content: center;
+}
+
+.product-page.parfum .image img {
+  display: block;
+  margin: 0 auto;
+}
+
+/* Accordéons parfum */
+.product-page.parfum .accordion {
+  margin-top: 0;
+}
+
+.product-page.parfum .accordion-item {
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: none;
+}
+
+.product-page.parfum .accordion-item:last-child {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.product-page.parfum .accordion-toggle {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 18px 0;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.product-page.parfum .accordion-toggle:hover {
+  opacity: 0.9;
+}
+
+.product-page.parfum .accordion-content {
+  padding-bottom: 20px;
+}
+
+.product-page.parfum .composition-text,
+.product-page.parfum .confectionnee-text {
+  font-size: 12px;
+  line-height: 1.7;
+  opacity: 0.75;
+  color: #1a1a1a;
+}
+
+/* =========================
+   JOURNAL — ÉVÈNEMENTS
+========================= */
+
+.events-page {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 140px 20px 160px;
+}
+
+.events-title {
+  text-align: center;
+  margin-bottom: 120px;
+}
+
+.events-title h1 {
+  font-size: 42px;
+  letter-spacing: 4px;
+}
+
+.events-title p {
+  margin-top: 20px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  opacity: 0.6;
+}
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.event-entry {
+  margin-bottom: 80px;
+}
+
+.event-date {
+  font-size: 11px;
+  letter-spacing: 2px;
+  opacity: 0.5;
+  margin-bottom: 20px;
+}
+
+.event-entry h2 {
+  font-size: 22px;
+  letter-spacing: 2px;
+  margin-bottom: 30px;
+}
+
+.event-text {
+  font-size: 14px;
+  line-height: 1.8;
+  opacity: 0.85;
+}
+
+/* Ligne de séparation */
+
+.event-divider {
+  width: 100%;
+  height: 1px;
+  background: black;
+  opacity: 0.15;
+  margin-bottom: 100px;
+}
+
+.event-link {
+  display: inline-block;
+  margin-top: 30px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: black;
+  opacity: 0.6;
+  border-bottom: 1px solid black;
+  padding-bottom: 4px;
+  transition: 0.3s ease;
+}
+
+.event-link:hover {
+  opacity: 1;
+}
+
+/* =========================
+   TRANSITION PAGE BLANCHE
+========================= */
+
+#page-transition {
+  position: fixed;
+  inset: 0;
+  background: white;
+  z-index: 2000;
+  pointer-events: none;
+  animation: fadeOut 1.6s cubic-bezier(.4,0,.2,1) forwards;
+}
+
+/* Le contenu du site (sous le voile) */
+#page-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Le header reste toujours au-dessus */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 3000;
+}
+
+/* Animation */
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+.no-return {
+  margin-top: 12px;          /* espace réduit avec la description */
+  margin-bottom: 28px;       /* espace avant la ligne */
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  opacity: 0.5;
+  font-style: italic;
+}
+
+/* petite ligne fine sous le texte juridique */
+.no-return::after {
+  content: "";
+  display: block;
+  width: 260px;
+  height: 1px;
+  background: rgba(0,0,0,0.18);
+  margin: 22px auto 0;
+}
+
+/* =========================
+   FOOTER — SIGNATURE
+========================= */
+
+.site-footer {
+  margin-top: 120px;
+  padding: 22px 45px 18px;   /* beaucoup plus proche des bords */
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+
+.footer-inner {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Texte gauche */
+.footer-left p {
+  font-size: 10px;
+  letter-spacing: 2px;
+  opacity: 0.5;
+}
+
+/* Liens */
+.footer-links {
+  display: flex;
+  gap: 42px;
+}
+
+/* reset des anciens styles de navigation */
+.footer-links a {
+  all: unset;
+  cursor: pointer;
+  font-family: "Times New Roman", serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  opacity: 0.5;
+  position: relative;
+  padding-bottom: 4px;
+}
+
+/* animation élégante (comme le menu) */
+.footer-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  height: 1px;
+  background: black;
+  opacity: 0.5;
+  transition: 0.4s cubic-bezier(.4,0,.2,1);
+}
+
+.footer-links a:hover {
+  opacity: 0.85;
+}
+
+.footer-links a:hover::after {
+  width: 100%;
+}
+
+.price {
+  font-size: 16px;
+  letter-spacing: 1px;
+  opacity: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================
+   PAGE RETOURS – STYLE ÉDITORIAL
+========================= */
+
+.return-page {
+  min-height: 80vh;
+  display: flex;
+  justify-content: center;
+  padding: 160px 20px;
+}
+
+.return-wrapper {
+  max-width: 520px;
+  width: 100%;
+}
+
+.return-wrapper h1 {
+  font-size: 26px;
+  letter-spacing: 2px;
+  margin-bottom: 40px;
+}
+
+.return-intro {
+  font-size: 13px;
+  line-height: 1.8;
+  opacity: 0.7;
+  margin-bottom: 80px;
+}
+
+.return-form .field {
+  margin-bottom: 40px;
+}
+
+.return-form label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.return-form input,
+.return-form select,
+.return-form textarea {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid black;
+  padding: 10px 0;
+  font-family: "Times New Roman", serif;
+  font-size: 14px;
+  background: none;
+  outline: none;
+}
+
+.return-form textarea {
+  resize: none;
+}
+
+.radio-group {
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  margin-top: 10px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  letter-spacing: 2px;
+}
+
+
+.radio-group input {
+  margin-right: 8px;
+}
+
+.field.checkbox label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: none;
+  opacity: 0.7;
+}
+
+.return-submit {
+  margin-top: 60px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid black;
+  padding: 12px 0;
+  font-size: 12px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.return-submit:hover {
+  opacity: 0.6;
+}
+.checkbox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 60px 0 80px;
+}
+
+.checkbox-text {
+  max-width: 520px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.7;
+  letter-spacing: 1.5px;
+  opacity: 0.7;
+  margin-bottom: 18px;
+}
+
+.checkbox input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* =========================
+   PAGES LÉGALES — SIMONE SIXX
+========================= */
+
+.legal-page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 160px 20px 200px;
+}
+
+.legal-title {
+  text-align: center;
+  margin-bottom: 140px;
+}
+
+.legal-title h1 {
+  font-size: 42px;
+  letter-spacing: 4px;
+  margin-bottom: 20px;
+}
+
+.legal-title p {
+  font-size: 12px;
+  letter-spacing: 3px;
+  opacity: 0.5;
+}
+
+/* Sections */
+
+.legal-content h2 {
+  font-size: 18px;
+  letter-spacing: 2px;
+  margin-bottom: 40px;
+  margin-top: 120px;
+}
+
+.legal-content p {
+  font-size: 13px;
+  line-height: 1.9;
+  opacity: 0.85;
+  margin-bottom: 26px;
+  max-width: 520px;
+}
+
+/* Ligne respirante entre blocs */
+
+.legal-divider {
+  width: 100%;
+  height: 1px;
+  background: black;
+  opacity: 0.12;
+  margin: 140px 0;
+}
+
+/* Liens discrets */
+
+.legal-content a {
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0,0,0,0.4);
+  color: black;
+  padding-bottom: 2px;
+  transition: opacity .3s ease;
+}
+
+.legal-content a:hover {
+  opacity: .6;
+}
+
+/* =========================
+   FORMULAIRE CONTACT
+========================= */
+
+.contact-form {
+  max-width: 360px;
+}
+
+.form-group {
+  margin-bottom: 36px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 2px;
+  opacity: 0.6;
+  margin-bottom: 12px;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid rgba(0,0,0,0.3);
+  background: transparent;
+  font-size: 14px;
+  padding: 8px 0;
+  outline: none;
+  font-family: "Times New Roman", serif;
+}
+
+.contact-form textarea {
+  resize: none;
+  border-bottom: 1px solid rgba(0,0,0,0.3);
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  border-bottom: 1px solid black;
+}
+
+.contact-submit {
+  background: none;
+  border: none;
+  border-bottom: 1px solid black;
+  padding: 10px 0;
+  font-size: 12px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  margin-top: 30px;
+}
+/* =========================
+   PAGE CONTACT
+========================= */
+
+.contact-page {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 140px 80px;
+}
+
+/* Titre */
+.contact-title {
+  text-align: center;
+  margin-bottom: 120px;
+}
+
+.contact-title h1 {
+  font-size: 42px;
+  letter-spacing: 4px;
+}
+
+.contact-title p {
+  margin-top: 20px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  opacity: 0.6;
+}
+
+/* Grille texte / formulaire */
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 120px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Texte gauche */
+.contact-info {
+  font-size: 14px;
+  line-height: 1.8;
+  opacity: 0.8;
+  max-width: 360px;
+}
+
+.event-excerpt {
+  overflow: hidden;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 8;
+
+  /* fallback visuel */
+  max-height: calc(1.9em * 8);
+}
+
+/* =================================================
+   ARTICLE — PAGE PRINCIPALE
+================================================= */
+
+.article-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.article-header {
+  padding: 100px 80px 60px 80px;
+  text-align: center;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.article-meta {
+  margin-bottom: 40px;
+}
+
+.article-date {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,0.6);
+  display: inline-block;
+}
+
+.article-title {
+  font-size: 42px;
+  letter-spacing: 1px;
+  font-weight: normal;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.article-divider {
+  height: 1px;
+  background: rgba(0,0,0,0.08);
+  margin: 0;
+}
+
+.article-split {
+  max-width: 1200px;
+  margin: 80px auto 160px;
+  padding: 0 80px;
+
+  display: grid;
+  grid-template-columns: 1fr 0.85fr;
+  gap: 120px;
+  align-items: start;
+}
+
+/* Texte */
+
+.article-text h1 {
+  display: none;
+}
+
+.article-text p {
+  font-size: 15px;
+  line-height: 1.85;
+  margin-bottom: 24px;
+  opacity: 0.85;
+  max-width: 420px;
+  font-weight: 300;
+}
+
+.article-text p:first-child {
+  margin-top: 0;
+}
+
+.article-text p em {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* Image */
+
+.article-image {
+  position: sticky;
+  top: 100px;
+}
+
+.carousel-container {
+  position: relative;
+  width: 100%;
+}
+
+.article-image img {
+  width: 100%;
+  height: 600px;
+  object-fit: cover;
+  display: block;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.carousel-nav {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: all 0.4s ease;
+}
+
+.carousel-dot.active {
+  background: rgba(0,0,0,0.8);
+  width: 24px;
+  border-radius: 4px;
+}
+
+.carousel-dot:hover {
+  background: rgba(0,0,0,0.5);
+}
+
+.accordion {
+  margin-top: 60px;
+  max-width: 420px;
+}
+
+.accordion {
+  margin-top: 60px;
+  max-width: 420px;
+}
+
+.accordion-item {
+  border-top: 1px solid rgba(0,0,0,0.15);
+}
+
+.accordion-toggle {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 18px 0;
+  font-family: "Times New Roman", serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.accordion-toggle:hover {
+  opacity: 1;
+}
+
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.6s cubic-bezier(.4,0,.2,1), opacity 0.4s ease;
+  opacity: 0;
+}
+
+.accordion-item.open .accordion-content {
+  max-height: 800px;
+  opacity: 1;
+}
+
+/* tableau des tailles */
+.size-table {
+  padding-bottom: 30px;
+}
+
+.size-table .row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr 1fr;
+  font-size: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.size-table .head {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.5;
+  border-bottom: 1px solid rgba(0,0,0,0.25);
+}
+
+/* texte mannequin */
+.mannequin-text {
+  font-size: 13px;
+  line-height: 1.7;
+  opacity: 0.8;
+  padding: 10px 0 30px;
+}
+
+.composition-text {
+  font-size: 13px;
+  line-height: 1.7;
+  opacity: 0.8;
+  padding: 5px 0 30px;
+}
+
+.confectionnee-text {
+  font-size: 13px;
+  line-height: 1.7;
+  opacity: 0.8;
+  padding: 5px 0 30px;
+}
+
+.size.disabled {
+  opacity: 0.3;
+  text-decoration: line-through;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+/* Format parfum indisponible */
+.parfum-sizes .size.disabled {
+  opacity: 0.3;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+/* =========================
+   COMPTE CLIENT
+========================= */
+
+.account-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 160px 40px 200px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 120px;
+}
+
+.account-block h1 {
+  font-size: 28px;
+  letter-spacing: 3px;
+  margin-bottom: 60px;
+}
+
+.account-block label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 2px;
+  opacity: 0.6;
+  margin-bottom: 10px;
+}
+
+.account-block input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid black;
+  background: none;
+  padding: 10px 0;
+  margin-bottom: 40px;
+  font-family: "Times New Roman", serif;
+}
+
+.account-block button {
+  background: none;
+  border: none;
+  border-bottom: 1px solid black;
+  padding: 12px 0;
+  font-size: 12px;
+  letter-spacing: 3px;
+  cursor: pointer;
+}
+
+.newsletter {
+  margin: 30px 0 40px;
+}
+
+.newsletter-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  opacity: 0.6;
+  cursor: pointer;
+}
+/* Texte descriptif secondaire */
+.newsletter-description {
+  margin-top: -30px;              /* proche du titre */
+  margin-left: 2px;             /* aligne visuellement sous le texte, pas la case */
+  max-width: 320px;
+
+  font-size: 10px;
+  line-height: 1.7;
+  letter-spacing: 1.2px;
+  opacity: 0.45;
+}
+
+.newsletter-label input {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+
+.nav-right a:first-child {
+  position: relative;
+  margin-right: 26px; /* espace avant le trait */
+}
+
+.nav-right a:first-child::after {
+  content: "";
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-75%);
+  width: 1px;
+  height: 12px;
+  background: rgba(0,0,0,0.35);
+
+  pointer-events: none; /* ← CLÉ ABSOLUE */
+}
+
+
+
+.nav-account {
+  opacity: 0.7;
+}
+
+.nav-account:hover {
+  opacity: 1;
+}
+.nav-account {
+  font-size: 9px;
+  letter-spacing: 2px;
+  opacity: 0.6;
+}
+
+/* =========================
+   MON COMPTE — SIMONE SIXX
+========================= */
+
+.account-logged-page .account-page {
+  min-height: 80vh;
+  display: flex;
+  justify-content: center;
+  padding: 160px 20px 200px;
+}
+
+.account-logged-page .account-wrapper {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 140px;
+}
+
+.account-logged-page .account-section h1 {
+  font-size: 42px;
+  letter-spacing: 4px;
+  margin-bottom: 30px;
+}
+
+.account-logged-page .account-email {
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  opacity: 0.6;
+}
+
+.account-logged-page .account-section {
+  max-width: 520px;
+}
+
+.account-logged-page .account-section h2 {
+  font-size: 18px;
+  letter-spacing: 2px;
+  margin-bottom: 30px;
+}
+
+.account-logged-page .account-empty {
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  opacity: 0.5;
+}
+
+.account-logged-page .order {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 30px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.15);
+  font-size: 13px;
+}
+
+.account-logged-page .account-empty {
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  opacity: 0.5;
+}
+
+.account-logged-page .order {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 30px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.15);
+  font-size: 13px;
+}
+
+.account-logged-page .newsletter-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  cursor: pointer;
+}
+
+.account-logged-page .newsletter-label input {
+  width: 14px;
+  height: 14px;
+}
+
+.account-logged-page .newsletter-description {
+  margin-top: 14px;
+  font-size: 11px;
+  line-height: 1.7;
+  letter-spacing: 1.5px;
+  opacity: 0.5;
+  max-width: 360px;
+}
+
+
+.account-logged-page .account-logout {
+  margin-top: 40px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid black;
+  padding: 12px 0;
+  font-size: 12px;
+  letter-spacing: 3px;
+  cursor: pointer;
+}
+
+.account-logged-page .account-logout:hover {
+  opacity: 0.6;
+}
+
+/* Nom affiché — édition */
+
+.account-label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 2px;
+  opacity: 0.5;
+  margin-bottom: 14px;
+}
+
+.account-name-edit {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.account-name-edit input {
+  border: none;
+  border-bottom: 1px solid rgba(0,0,0,0.3);
+  background: none;
+  padding: 8px 0;
+  font-size: 14px;
+  font-family: "Times New Roman", serif;
+  outline: none;
+  width: 220px;
+}
+
+.account-name-edit button {
+  background: none;
+  border: none;
+  border-bottom: 1px solid black;
+  font-size: 11px;
+  letter-spacing: 2px;
+  cursor: pointer;
+}
+
+.empty-state {
+  display: none;
+  text-align: center;
+  margin: 120px 0 160px;
+}
+
+.empty-title {
+  font-family: "Times New Roman", serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 16px;
+}
+
+.empty-text {
+  font-size: 11px;
+  line-height: 1.8;
+  opacity: 0.45;
+  max-width: 420px;
+  margin: 0 auto;
+}
+/* ======================
+   NEWSLETTER POPUP
+====================== */
+
+.newsletter-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  z-index: 9999;
+}
+
+.newsletter-popup.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.newsletter-box {
+  background: #fff;
+  width: 100%;
+  max-width: 420px;
+  padding: 70px 50px 80px;
+  text-align: center;
+  position: relative;
+  animation: fadeUp 0.5s ease;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.newsletter-box h2 {
+  font-size: 24px;
+  letter-spacing: 3px;
+  margin-bottom: 30px;
+}
+
+.newsletter-box p {
+  font-size: 13px;
+  line-height: 1.8;
+  opacity: 0.7;
+  margin-bottom: 50px;
+}
+
+.newsletter-box form {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.newsletter-box input {
+  border: none;
+  border-bottom: 1px solid rgba(0,0,0,0.4);
+  padding: 10px 0;
+  font-family: "Times New Roman", serif;
+  font-size: 14px;
+  background: none;
+  outline: none;
+  text-align: center;
+}
+
+.newsletter-box button {
+  background: none;
+  border: none;
+  border-bottom: 1px solid black;
+  padding: 12px 0;
+  font-size: 12px;
+  letter-spacing: 3px;
+  cursor: pointer;
+}
+
+.newsletter-close {
+  position: absolute;
+  top: 15px;
+  right: 18px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.newsletter-close:hover {
+  opacity: 1;
+}
+
+.newsletter-success {
+  display: block;
+  margin-top: 40px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  opacity: 0.6;
+}
+
+/* =================================================
+   HEADER MOBILE — PAR DÉFAUT (DESKTOP)
+================================================= */
+
+.header-mobile,
+.menu-mobile {
+  display: none;
+}
+
+/* =================================================
+   MOBILE UNIQUEMENT
+================================================= */
+
+@media (max-width: 768px) {
+
+  /* ===============================
+     DÉSACTIVER LE HEADER DESKTOP
+  =============================== */
+
+  header,
+  .nav-left {
+    display: none;
+  }
+
+  /* ===============================
+     HEADER MOBILE
+  =============================== */
+
+  .header-mobile {
+    display: block;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 4000;
+  }
+
+  .header-mobile-top {
+    position: relative;                /* base du centrage */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+  }
+
+  /* ===============================
+     ZONES GAUCHE / DROITE
+     (largeur fixe = logo centré)
+  =============================== */
+
+  .menu-toggle {
+  width: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  z-index: 2;
+  }
+
+  .header-mobile-actions {
+  position: absolute;
+  right: 0.1px;        /* ← C’EST ICI QUE TU CONTRÔLES */
+  top: 50%;
+  transform: translateY(-50%);
+
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+
+
+
+  .menu-toggle {
+    justify-content: flex-start;
+  }
+
+  .header-mobile-actions {
+    justify-content: flex-end;
+  }
+
+  /* ===============================
+     MENU & PANIER — STYLE ÉDITORIAL
+  =============================== */
+
+  .menu-toggle,
+  .header-mobile-actions a {
+    all: unset;
+    cursor: pointer;
+
+    font-family: "Times New Roman", serif;
+    font-size: 8.5px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: black;
+    opacity: 0.7;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .menu-toggle:hover,
+  .header-mobile-actions a:hover {
+    opacity: 1;
+  }
+
+  /* ===============================
+     LOGO — CENTRE ABSOLU
+  =============================== */
+
+  .header-mobile-logo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .header-mobile-logo img {
+    max-width: 120px;
+    height: auto;
+    display: block;
+  }
+
+  /* ===============================
+     MENU MOBILE DÉROULANT
+  =============================== */
+
+  .menu-mobile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+
+    padding: 0 20px;
+
+    transition:
+      max-height 0.6s cubic-bezier(.4,0,.2,1),
+      opacity 0.4s ease;
+  }
+
+  .menu-mobile.is-open {
+    max-height: 500px;
+    opacity: 1;
+    padding: 30px 20px 40px;
+  }
+
+  .menu-mobile a {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: black;
+    opacity: 0.85;
+    padding: 12px 0;
+  }
+
+  .menu-secondary {
+    margin-top: 20px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    opacity: 0.6;
+  }
+
+  /* ===============================
+     INDEX — PAGE D'ACCUEIL MOBILE
+  =============================== */
+
+  .hero {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-top: 0;
+    margin-bottom: 60px;
+    justify-content: stretch;
+  }
+
+  .hero img {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+  }
+
+  .banners {
+    width: 100%;
+    margin-bottom: 60px;
+    padding: 0 16px;
+    box-sizing: border-box;
+  }
+
+  .banner {
+    width: 100%;
+    max-width: 100%;
+    height: 180px;
+    margin: 24px auto;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .banner-text {
+    left: 24px;
+  }
+
+  .banner-text h2 {
+    font-size: 18px;
+    letter-spacing: 1px;
+  }
+
+  .banner-text p {
+    font-size: 12px;
+    letter-spacing: 1px;
+    opacity: 0.8;
+  }
+
+}
+@media (max-width: 768px) {
+
+  .site-footer {
+    padding: 36px 20px 28px;
+    margin-top: 80px;
+    border-top: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .footer-inner {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+  }
+
+  /* © */
+  .footer-left p {
+    font-size: 9px;
+    letter-spacing: 2px;
+    opacity: 0.45;
+  }
+
+  /* liens horizontaux */
+  .footer-links {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap; /* sécurité petits écrans */
+  }
+
+  .footer-links a {
+    font-size: 10px;
+    letter-spacing: 2px;
+    opacity: 0.6;
+    white-space: nowrap;
+  }
+
+  .footer-links a:hover {
+    opacity: 1;
+  }
+}
+/* =================================================
+   CONFECTIONS — MOBILE ÉDITORIAL (2 COLONNES)
+================================================= */
+
+@media (max-width: 768px) {
+
+  /* ===============================
+     CONTENEUR PAGE
+  =============================== */
+
+  main.collection {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  /* ===============================
+     GRILLE PRODUITS
+  =============================== */
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 48px 16px;          /* vertical / horizontal */
+    padding: 8px 16px;      /* respiration latérale */
+
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ===============================
+     ITEM PRODUIT
+  =============================== */
+
+  .item {
+    display: block;
+    text-align: left;
+  }
+
+  /* ===============================
+     IMAGE PRODUIT
+  =============================== */
+
+  .item img {
+    width: 100%;
+    max-height: 50vh;    /* ratio mode éditorial */
+    object-fit: cover;
+    display: block;
+
+    background-color: #f2f2f2; /* fallback visuel */
+  }
+
+  /* ===============================
+     TITRE PRODUIT
+  =============================== */
+
+  .item p {
+    margin-top: 16px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  /* ===============================
+     PRIX
+  =============================== */
+
+  .item span {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    opacity: 0.6;
+  }
+
+}
+
+
+/* =================================================
+   FILTRES — MOBILE ÉDITORIAL (TEXTE CLASSIQUE, STABLE)
+================================================= */
+@media (max-width: 768px) {
+
+  /* ===============================
+     CONTENEUR GLOBAL FILTRES
+     (décalé sous le header)
+  =============================== */
+
+  .categories {
+    background: #fff;
+    text-align: center;
+
+    padding: 14px 0 18px;
+    margin-top: 18px;          /* 🔑 ESPACE SOUS LE HEADER */
+    margin-bottom: 2px;
+
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===============================
+     LIGNES DE FILTRES
+     (sans scroll, retour à la ligne)
+  =============================== */
+
+  .categories-level {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    gap: 8px 18px;             /* vertical / horizontal */
+    padding: 6px 20px;
+    margin: 0;
+
+    white-space: normal;
+  }
+
+  /* ===============================
+     TEXTE DES FILTRES
+  =============================== */
+
+  .categories-level span {
+    font-size: 9.5px;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+
+    color: #000;
+    opacity: 0.45;
+
+    cursor: pointer;
+    position: relative;
+    padding-bottom: 3px;
+    line-height: 1.2;
+  }
+
+  /* ===============================
+     ÉTAT ACTIF
+  =============================== */
+
+  .categories-level span.active {
+    opacity: 0.9;
+  }
+
+  .categories-level span.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+
+    width: 100%;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  /* ===============================
+     DIVISEUR
+  =============================== */
+
+  .categories-divider {
+    width: 26px;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.12);
+    margin: 12px auto 0;
+  }
+
+}
+
+/* ===============================
+   ÉTATS DES FILTRES
+=============================== */
+
+/* filtre actif */
+.categories-level span.active {
+  opacity: 0.95;
+  pointer-events: auto;
+}
+
+/* filtre inactif mais disponible */
+.categories-level span {
+  opacity: 0.55;
+  pointer-events: auto;
+}
+
+/* filtre DÉSACTIVÉ (clé) */
+.categories-level span.disabled {
+  opacity: 0.25;
+  pointer-events: none;     /* 🔑 empêche le clic */
+}
+
+/* underline uniquement pour actif */
+.categories-level span::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  height: 1px;
+  background: rgba(0,0,0,0.6);
+  transition: width 0.3s ease;
+}
+
+.categories-level span.active::after {
+  width: 100%;
+}
+
+/* ===============================
+   MASQUER NIVEAU 3 PAR DÉFAUT
+=============================== */
+
+#level2,
+#level3 {
+  display: none;
+}
+/* Afficher niveau 2 si niveau 1 a une sélection */
+#level1.has-selection + #level2 {
+  display: flex;
+}
+/* Afficher niveau 3 si niveau 2 a une sélection */
+#level2.has-selection + #level3 {
+  display: flex;
+}
+
+/* =================================================
+   FICHE PRODUIT — MOBILE ÉDITORIAL
+================================================= */
+@media (max-width: 768px) {
+
+  /* ===============================
+     PAGE GLOBALE
+  =============================== */
+
+  .product-page {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    gap: 0;
+  }
+
+  /* ===============================
+     IMAGE PRODUIT
+  =============================== */
+
+  .product-page .image {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    display: flex;
+    justify-content: center;
+    background: #f2f2f2;
+    position: relative;
+  }
+
+  .carousel-container {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    position: relative;
+    background: #f2f2f2;
+    height: 70vh;
+  }
+
+  .product-page .image img {
+    width: 100vw;
+    height: 70vh;
+    object-fit: cover;
+    display: block;
+  }
+
+  .mobile-only {
+    display: flex !important;
+  }
+
+  /* ===============================
+     CARROUSEL MOBILE
+  =============================== */
+
+  .carousel-nav {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  /* ===============================
+     BLOC INFOS
+  =============================== */
+
+  .product-page .info {
+    padding: 36px 20px 0;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* ===============================
+     TITRE
+  =============================== */
+
+  .product-page .info h1 {
+    font-size: 20px;
+    line-height: 1.35;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  /* ===============================
+     PRIX
+  =============================== */
+
+  .product-page .price {
+    font-size: 15px;
+    margin-bottom: 28px;
+    opacity: 0.85;
+  }
+
+  /* ===============================
+     DESCRIPTION
+  =============================== */
+
+  .product-page .description {
+    font-size: 13px;
+    line-height: 1.7;
+    opacity: 0.85;
+    margin-bottom: 40px;
+    max-width: 420px;
+  }
+
+  /* ===============================
+     TAILLES
+  =============================== */
+
+  .product-page .sizes {
+    margin-bottom: 48px;
+  }
+
+  .product-page .sizes p {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.6;
+    margin-bottom: 18px;
+  }
+
+  .product-page .size {
+    width: 100%;
+    padding: 14px 0;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(0,0,0,0.35);
+    cursor: pointer;
+  }
+
+  .product-page .size.selected {
+    font-weight: 600;
+  }
+
+  .product-page .size.disabled {
+    opacity: 0.3;
+    text-decoration: line-through;
+    pointer-events: none;
+  }
+
+  /* ===============================
+     BOUTON PANIER
+  =============================== */
+
+  .product-page .add-to-cart {
+    width: 100%;
+    margin: 0 0 60px;
+    padding: 16px 0;
+    font-size: 12px;
+    letter-spacing: 3px;
+    border-bottom: 1px solid black;
+    text-align: center;
+  }
+
+  /* ===============================
+     ACCORDÉONS
+  =============================== */
+
+  .product-page .accordion {
+    max-width: 480px;
+    margin: 0 auto 80px;
+    padding: 0 20px;
+  }
+
+  .accordion-toggle {
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 18px 0;
+  }
+
+  .accordion-content {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  /* ===============================
+     TABLEAU TAILLES
+  =============================== */
+
+  .size-table .row {
+    font-size: 11px;
+    padding: 10px 0;
+  }
+
+}
+
+/* =================================================
+   PARFUM — VERSION MOBILE ÉDITORIALE
+================================================= */
+
+@media (max-width: 768px) {
+
+  /* CONTENEUR GLOBAL */
+  .product-page.parfum {
+    display: block;
+    padding: 0;
+  }
+
+  /* IMAGE */
+  .product-page.parfum .image {
+    width: 100%;
+    padding: 0;
+  }
+
+  .product-page.parfum .image img {
+    width: 100%;
+    height: 78vh;              /* présence forte mais pas écrasante */
+    object-fit: cover;
+    display: block;
+  }
+
+  /* INFOS */
+  .product-page.parfum .info {
+    padding: 40px 22px 60px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  /* TITRE */
+  .product-page.parfum .info h1 {
+    font-size: 24px;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  /* TYPE */
+  .parfum-type {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.6;
+    margin-bottom: 14px;
+  }
+
+  /* PRIX */
+  .product-page.parfum .price {
+    font-size: 16px;
+    margin-bottom: 28px;
+  }
+
+  /* DESCRIPTION */
+  .product-page.parfum .description {
+    font-size: 13px;
+    line-height: 1.7;
+    opacity: 0.85;
+    margin-bottom: 26px;
+  }
+
+  /* TEXTE NON RETOUR */
+  .no-return {
+    font-size: 11px;
+    line-height: 1.6;
+    opacity: 0.5;
+    margin-bottom: 40px;
+  }
+
+  /* FORMATS */
+  .parfum-sizes {
+    margin-bottom: 40px;
+  }
+
+  .parfum-sizes p {
+    font-size: 11px;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+
+  .parfum-sizes .size {
+    width: 180px;
+    font-size: 12px;
+    padding: 10px 0;
+  }
+
+  /* BOUTON */
+  .product-page.parfum .add-to-cart {
+    width: 100%;
+    margin: 0 0 60px;
+    padding: 16px 0;
+    font-size: 12px;
+    letter-spacing: 3px;
+    border-bottom: 1px solid black;
+    text-align: center;
+  }
+
+  /* ACCORDÉONS */
+  .product-page.parfum .accordion {
+    margin-top: 30px;
+  }
+
+  .product-page.parfum .accordion-toggle {
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+
+  .product-page.parfum .accordion-content p {
+    font-size: 13px;
+    line-height: 1.7;
+    opacity: 0.85;
+  }
+
+}
+/* =================================================
+   COLLECTIONS — MOBILE ÉDITORIAL
+================================================= */
+
+@media (max-width: 768px) {
+
+  .collections-page {
+    min-height: calc(100vh - 120px); /* respire sous le header */
+    padding: 120px 24px 160px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    gap: 90px;
+    text-align: center;
+  }
+
+  /* LIENS COLLECTION */
+  .collection-link {
+    font-family: "Times New Roman", serif;
+    font-size: 22px;
+    line-height: 1.6;
+
+    letter-spacing: 2px;
+    text-decoration: none;
+    color: black;
+
+    opacity: 0.85;
+    position: relative;
+
+    max-width: 280px;
+  }
+
+  /* LIGNE ÉDITORIALE */
+  .collection-link::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -18px;
+
+    width: 0%;
+    height: 1px;
+    background: black;
+
+    transform: translateX(-50%);
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* INTERACTION */
+  .collection-link:hover {
+    opacity: 1;
+  }
+
+  .collection-link:hover::after {
+    width: 60%;
+  }
+
+}
+
+/* =================================================
+   ÉVÈNEMENTS — MOBILE ÉDITORIAL
+================================================= */
+
+@media (max-width: 768px) {
+
+  .events-page {
+    max-width: 100%;
+    padding: 120px 24px 160px;
+  }
+
+  /* TITRE PAGE */
+  .events-title {
+    text-align: center;
+    margin-bottom: 100px;
+  }
+
+  .events-title h1 {
+    font-size: 32px;
+    letter-spacing: 3px;
+    margin-bottom: 18px;
+  }
+
+  .events-title p {
+    font-size: 11px;
+    letter-spacing: 2px;
+    opacity: 0.55;
+  }
+
+  /* LISTE */
+  .events-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ARTICLE */
+  .event-entry {
+    margin-bottom: 80px;
+  }
+
+  .event-date {
+    font-size: 10px;
+    letter-spacing: 2px;
+    opacity: 0.45;
+    margin-bottom: 14px;
+  }
+
+  .event-entry h2 {
+    font-size: 18px;
+    letter-spacing: 2px;
+    margin-bottom: 22px;
+  }
+
+  .event-text {
+    font-size: 13px;
+    line-height: 1.8;
+    opacity: 0.85;
+    max-width: 100%;
+    margin-bottom: 26px;
+  }
+
+  /* LIEN */
+  .event-link {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.6;
+    border-bottom: 1px solid black;
+    padding-bottom: 4px;
+  }
+
+  .event-link:hover {
+    opacity: 1;
+  }
+
+  /* SÉPARATEUR */
+  .event-divider {
+    width: 100%;
+    height: 1px;
+    background: black;
+    opacity: 0.12;
+    margin: 80px 0;
+  }
+
+}
+
+/* =================================================
+   PANIER — MOBILE ÉDITORIAL
+================================================= */
+
+@media (max-width: 768px) {
+
+  .cart-page {
+    padding: 80px 20px 120px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .cart-page h1 {
+    font-size: 24px;
+    letter-spacing: 1.5px;
+    margin-bottom: 48px;
+    text-align: left;
+    font-weight: 400;
+  }
+
+  /* CONTENEUR DES ARTICLES */
+  #cartItems {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 60px;
+  }
+
+  /* ARTICLE PANIER (injecté par JS) */
+  .cart-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr auto;
+    gap: 16px;
+    align-items: center;
+
+    padding: 18px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: 13px;
+  }
+
+  .cart-item-name {
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    line-height: 1.4;
+  }
+
+  .cart-item-details {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-top: 4px;
+  }
+
+  .cart-item-price {
+    font-size: 13px;
+    opacity: 0.8;
+    text-align: right;
+  }
+
+  .cart-item button {
+    align-self: center;
+    background: none;
+    border: none;
+    border-bottom: 1px solid black;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 0;
+    cursor: pointer;
+    opacity: 0.5;
+    white-space: nowrap;
+  }
+
+  .cart-item button:hover {
+    opacity: 1;
+  }
+
+  /* FOOTER PANIER */
+  .cart-footer {
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    align-items: stretch;
+    padding-top: 24px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .cart-footer p {
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-align: left;
+  }
+
+  .cart-footer p span {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+
+  .cart-footer .add-to-cart {
+    width: 100%;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 0;
+    border-bottom: 1px solid black;
+    text-align: center;
+    margin-top: 0;
+  }
+
+}
+
+/* =================================================
+   LOOKBOOK — MOBILE (2 COLONNES ÉDITORIALES)
+================================================= */
+
+@media (max-width: 768px) {
+
+  .lookbook-page {
+    padding-top: 110px;
+    padding-bottom: 120px;
+  }
+
+  /* TITRE */
+  .lookbook-title {
+    margin-bottom: 70px;
+    padding: 0 18px;
+    text-align: center;
+  }
+
+  .lookbook-title p {
+    font-size: 10px;
+    letter-spacing: 3px;
+    opacity: 0.5;
+    margin-bottom: 16px;
+  }
+
+  .lookbook-title h1 {
+    font-size: 28px;
+    letter-spacing: 3px;
+    line-height: 1.2;
+  }
+
+  /* GRILLE 2 COLONNES */
+  .lookbook-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 14px;               /* 🔑 gouttière fine */
+    padding: 0 12px;         /* 🔑 images très larges */
+  }
+
+  /* IMAGES */
+  .lookbook-grid img {
+    width: 100%;
+    aspect-ratio: 3 / 4;     /* cohérent avec le reste du site */
+    object-fit: cover;
+    display: block;
+    cursor: pointer;
+  }
+
+}
+
+/* =================================================
+/* =================================================
+   ARTICLE — VERSION MOBILE
+================================================= */
+@media (max-width: 768px) {
+
+  .article-header {
+    padding: 50px 20px 40px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+  }
+
+  .article-meta {
+    margin-bottom: 24px;
+  }
+
+  .article-date {
+    font-size: 10px;
+  }
+
+  .article-title {
+    font-size: 28px;
+  }
+
+  .article-split {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    padding: 32px 20px 64px;
+    margin: 40px auto 80px;
+  }
+
+  /* IMAGE */
+  .article-image {
+    width: 100%;
+    position: static;
+  }
+
+  
+
+  .carousel-nav {
+    margin-top: 16px;
+  }
+
+  /* TEXTE */
+  .article-text {
+    max-width: 100%;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #111;
+  }
+
+  .article-text p {
+    margin-bottom: 18px;
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .article-text p em {
+    font-style: italic;
+    display: inline;
+  }
+
+}
+
+/* =================================================
+   DEMANDE DE RETOUR — VERSION MOBILE (PROPRE & ÉDITORIALE)
+================================================= */
+@media (max-width: 768px) {
+
+  /* PAGE */
+  .return-page {
+    padding: 32px 18px 72px;
+  }
+
+  .return-wrapper {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* TITRE */
+  .return-wrapper h1 {
+    font-size: 22px;
+    text-align: center;
+    margin-bottom: 22px;
+  }
+
+  /* TEXTE INTRODUCTIF */
+  .return-intro {
+    font-size: 13px;
+    line-height: 1.7;
+    text-align: center;
+    margin-bottom: 40px;
+    color: #333;
+  }
+
+  /* FORMULAIRE */
+  .return-form {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  /* CHAMPS */
+  .field label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px 0;
+    border: none;
+    border-bottom: 1px solid #000;
+    background: transparent;
+    outline: none;
+  }
+
+  .field textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  /* RADIOS */
+  .radio-group {
+    display: flex;
+    gap: 28px;
+    margin-top: 12px;
+  }
+
+  .radio-group label {
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  /* CONFIRMATION */
+  .checkbox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    margin-top: 12px;
+  }
+
+  .checkbox-text {
+    font-size: 12px;
+    line-height: 1.6;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .checkbox input {
+    transform: scale(1.1);
+  }
+
+  /* BOUTON ENVOYER */
+  .return-submit {
+    margin: 40px auto 0;
+    width: 160px;
+    padding: 14px 0;
+    background: none;
+    border: 1px solid #000;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+}
+
+/* =================================================
+   CONTACT — VERSION MOBILE (ÉDITORIALE & CALME)
+================================================= */
+@media (max-width: 768px) {
+
+  /* PAGE */
+  .contact-page {
+    padding: 36px 18px 72px;
+  }
+
+  /* TITRE */
+  .contact-title h1 {
+    font-size: 22px;
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  /* GRILLE → COLONNE */
+  .contact-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  /* TEXTE INTRO */
+  .contact-info {
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #333;
+  }
+
+  .contact-info p {
+    margin-bottom: 14px;
+  }
+
+  /* FORMULAIRE */
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  /* GROUPES */
+  .form-group label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px 0;
+    border: none;
+    border-bottom: 1px solid #000;
+    background: transparent;
+    outline: none;
+  }
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 90px;
+  }
+
+  /* BOUTON */
+  .contact-submit {
+    margin: 40px auto 0;
+    width: 160px;
+    padding: 14px 0;
+    background: none;
+    border: 1px solid #000;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+}
+
+/* =================================================
+   PAGES LÉGALES — VERSION MOBILE
+================================================= */
+@media (max-width: 768px) {
+
+  /* PAGE */
+  .legal-page {
+    padding: 40px 20px 80px;
+  }
+
+  /* TITRES PRINCIPAUX */
+  .legal-title h1 {
+    font-size: 22px;
+    letter-spacing: 1.5px;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  /* CONTENU */
+  .legal-content {
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  /* TITRE H1 DANS CONTENU */
+  .legal-content > h1 {
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 48px;
+    letter-spacing: 1.2px;
+  }
+
+  /* SECTIONS */
+  .legal-content h2 {
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 48px;
+    margin-bottom: 14px;
+  }
+
+  /* PARAGRAPHES */
+  .legal-content p {
+    font-size: 13px;
+    line-height: 1.8;
+    margin-bottom: 14px;
+    color: #222;
+  }
+
+  /* LISTES TEXTE (—) */
+  .legal-content p br {
+    line-height: 2.2;
+  }
+
+  /* BLOCS CONTACT / INFOS */
+  .legal-content strong {
+    font-weight: 500;
+  }
+
+  /* SÉPARATION VISUELLE ENTRE GRANDES PARTIES */
+  .legal-title {
+    margin-top: 80px;
+  }
+
+  /* DERNIER ESPACEMENT */
+  .legal-content:last-of-type {
+    margin-bottom: 80px;
+  }
+
+}
+
+.newsletter-success,
+.newsletter-exists {
+  display: none;
+}
+.newsletter-success:not([hidden]),
+.newsletter-exists:not([hidden]) {
+  display: block;
+}

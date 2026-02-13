@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+
+  <!-- Responsive mobile (OBLIGATOIRE) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Confections — Simone Sixx</title>
+
+  <link rel="icon" href="assets/images/favicon.png" type="image/png">
+  <link rel="stylesheet" href="assets/css/style.css">
+
+  <script src="assets/js/shop.js" defer></script>
+  <script src="assets/js/newsletter.js" defer></script>
+</head>
+
+<body>
+
+<header class="header-mobile">
+  <div class="header-mobile">
+  <div class="header-mobile-top">
+
+    <!-- MENU BURGER — GAUCHE -->
+    <button class="menu-toggle" aria-label="Ouvrir le menu">
+      Menu
+    </button>
+
+    <!-- LOGO — CENTRE -->
+    <div class="header-mobile-logo">
+      <a href="index.html">
+        <img src="assets/images/logo.png" alt="Simone Sixx">
+      </a>
+    </div>
+
+    <!-- PANIER — DROITE -->
+    <div class="header-mobile-actions">
+      <a href="panier.html">
+        Panier (<span id="cartCount">0</span>)
+    </div>
+
+  </div>
+
+  <!-- MENU DÉROULANT -->
+  <nav class="menu-mobile">
+    <a href="confections.html">Confections</a>
+    <a href="parfums.html">Parfums</a>
+    <a href="collection.html">Collections</a>
+    <a href="events.html">Évènements</a>
+
+    <div class="menu-secondary">
+      <a href="#journal">Journal</a>
+    </div>
+  </nav>
+</div>
+
+</header>
+
+<header>
+  <nav class="nav">
+    <div class="nav-left">
+      <a href="confections.html" class="active">Confections</a>
+      <a href="parfums.html">Parfums</a>
+      <a href="collection.html">Collections</a>
+      <a href="events.html">Évènements</a>
+    </div>
+
+    <div class="nav-logo">
+      <a href="index.html">
+        <img src="assets/images/logo.png" class="logo-header" alt="Simone Sixx">
+      </a>
+    </div>
+
+    <div class="nav-right">
+      <a href="#newsletter" class="nav-newsletter">Journal</a>
+      <span class="nav-separator"></span>
+      <a href="panier.html">
+        Panier (<span id="cartCount">0</span>)
+      </a>
+    </div>
+  </nav>
+</header>
+
+<main class="collection">
+
+  <!-- FILTRE COLLECTION -->
+  <section class="categories categories-collection">
+    <div class="categories-level" id="collectionLevel">
+      <span data-collection="ss26">
+        Première collection — Printemps & Été 2026
+      </span>
+    </div>
+  </section>
+
+  <!-- NAVIGATION CATÉGORIES -->
+  <section class="categories">
+
+    <div class="categories-level" id="level1">
+      <span class="active" data-level1="vestiaire">Vestiaires</span>
+      <span data-level1="accessoires">Accessoires</span>
+      <span data-level1="chaussures">Chaussures</span>
+      <span data-level1="bijoux">Bijoux</span>
+    </div>
+
+    <div class="categories-level" id="level2">
+      <span class="active" data-level2="feminin">Féminin</span>
+      <span data-level2="masculin">Masculin</span>
+    </div>
+
+    <div class="categories-level" id="level3">
+      <span class="active" data-level3="manteaux">Manteaux</span>
+      <span data-level3="vestes">Vestes</span>
+      <span data-level3="pantalons">Pantalons</span>
+      <span data-level3="robes">Robes</span>
+      <span data-level3="hauts">Hauts</span>
+    </div>
+
+    <div class="categories-divider"></div>
+  </section>
+
+  <!-- GALERIE -->
+  <div class="grid">
+
+    <a href="produit.html?id=perfecto-en-cuir-noir"
+       class="item"
+       data-collection="ss26"
+       data-level1="vestiaire"
+       data-level2="feminin"
+       data-level3="manteaux">
+      <img src="assets/images/look1.jpg" alt="Perfecto en cuir noir">
+      <p>Perfecto en cuir noir</p>
+      <span>310,00 EUR</span>
+    </a>
+
+    <a href="produit.html?id=chemise-soie-noir"
+       class="item"
+       data-collection="ss26"
+       data-level1="vestiaire"
+       data-level2="feminin"
+       data-level3="vestes">
+      <img src="assets/images/look2.jpg" alt="Chemise soie noir">
+      <p>Chemise soie noir</p>
+      <span>250,00 EUR</span>
+    </a>
+
+    <a href="produit.html?id=manteau-long-homme"
+       class="item"
+       data-collection="ss26"
+       data-level1="vestiaire"
+       data-level2="masculin"
+       data-level3="manteaux">
+      <img src="assets/images/look3.jpg" alt="Manteau long homme">
+      <p>Manteau long homme</p>
+      <span>420,00 EUR</span>
+    </a>
+
+    <a href="produit.html?id=robe-fluide"
+       class="item"
+       data-collection="ss26"
+       data-level1="vestiaire"
+       data-level2="feminin"
+       data-level3="robes">
+      <img src="assets/images/look4.jpg" alt="Robe fluide">
+      <p>Robe fluide</p>
+      <span>340,00 EUR</span>
+    </a>
+
+    <a href="produit.html?id=haut-soie"
+       class="item"
+       data-level1="vestiaire"
+       data-level2="feminin"
+       data-level3="hauts">
+      <img src="assets/images/look5.jpg" alt="Haut en soie">
+      <p>Haut en soie</p>
+      <span>210,00 EUR</span>
+    </a>
+
+    <a href="produit.html?id=veste-structuree"
+       class="item"
+       data-collection="ss26"
+       data-level1="vestiaire"
+       data-level2="masculin"
+       data-level3="vestes">
+      <img src="assets/images/look6.jpg" alt="Veste structurée">
+      <p>Veste structurée</p>
+      <span>360,00 EUR</span>
+    </a>
+
+  </div>
+
+  <div class="empty-state" id="emptyState">
+    <p class="empty-title">Aucune pièce disponible</p>
+    <p class="empty-text">
+      Cette combinaison de filtres ne révèle aucune création pour le moment.
+    </p>
+  </div>
+
+
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-left">
+      <p>© 2026 Simone Sixx</p>
+    </div>
+    <div class="footer-links">
+      <a href="retours.html">Demande de retour</a>
+      <a href="legal.html">Pages légales</a>
+      <a href="contact.html">Contact</a>
+    </div>
+  </div>
+</footer>
+
+<div class="newsletter-popup" id="newsletterPopup">
+  <div class="newsletter-box">
+
+    <button class="newsletter-close" onclick="closeNewsletter()">×</button>
+
+    <h2>Journal Simone Sixx</h2>
+
+    <p>
+      Être informé des prochaines pièces,  
+      des évènements et publications.
+    </p>
+
+    <form id="newsletterForm">
+      <input
+        type="email"
+        placeholder="Adresse e-mail"
+    required
+  >
+      <button type="submit">S’inscrire</button>
+    </form>
+
+    <p class="newsletter-success" hidden>
+      Vous êtes inscrit au journal.
+    </p>
+
+    <p class="newsletter-exists" hidden>
+      Cette adresse est déjà inscrite.
+    </p>
+
+
+
+  </div>
+</div>
+
+</body>
+</html>

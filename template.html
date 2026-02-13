@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+
+  <!-- RESPONSIVE (OBLIGATOIRE) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- SEO MINIMAL -->
+  <title>TITRE DE LA PAGE — Simone Sixx</title>
+  <meta name="description" content="Simone Sixx — Créations, parfums et journal.">
+
+  <!-- FAVICON -->
+  <link rel="icon" href="assets/images/favicon.png" type="image/png">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="assets/css/style.css">
+
+  <!-- JS GLOBAL -->
+  <script src="assets/js/shop.js" defer></script>
+  <script src="assets/js/newsletter.js" defer></script>
+</head>
+
+<body>
+
+<!-- ======================
+     HEADER / NAVIGATION
+====================== -->
+<header>
+  <nav class="nav">
+
+    <div class="nav-left">
+      <a href="confections.html">Confections</a>
+      <a href="parfums.html">Parfums</a>
+      <a href="collection.html">Collections</a>
+      <a href="events.html">Évènements</a>
+    </div>
+
+    <div class="nav-logo">
+      <a href="index.html">
+        <img
+          src="assets/images/logo.png"
+          class="logo-header"
+          alt="Simone Sixx">
+      </a>
+    </div>
+
+    <div class="nav-right">
+      <a href="#" class="nav-newsletter">Journal</a>
+      <span class="nav-separator"></span>
+      <a href="panier.html">
+        Panier (<span class="cartCount">0</span>)
+      </a>
+    </div>
+
+  </nav>
+</header>
+
+<!-- ======================
+     CONTENU PAGE
+====================== -->
+<main>
+
+  <!--
+    CONTENU SPÉCIFIQUE À LA PAGE ICI
+    (hero, produit, article, formulaire, etc.)
+  -->
+
+</main>
+
+<!-- ======================
+     FOOTER
+====================== -->
+<footer class="site-footer">
+  <div class="footer-inner">
+
+    <div class="footer-left">
+      <p>© 2026 Simone Sixx</p>
+    </div>
+
+    <div class="footer-links">
+      <a href="retours.html">Demande de retour</a>
+      <a href="legal.html">Pages légales</a>
+      <a href="contact.html">Contact</a>
+    </div>
+
+  </div>
+</footer>
+
+<!-- ======================
+     NEWSLETTER (UNIQUE)
+====================== -->
+<div
+  class="newsletter-popup"
+  id="newsletterPopup"
+  role="dialog"
+  aria-modal="true"
+  aria-hidden="true">
+
+  <div class="newsletter-box">
+
+    <button
+      class="newsletter-close"
+      type="button"
+      aria-label="Fermer la newsletter">
+      ×
+    </button>
+
+    <h2>Journal Simone Sixx</h2>
+
+    <p>
+      Être informé des prochaines pièces,<br>
+      des évènements et publications.
+    </p>
+
+    <form id="newsletterForm">
+      <input
+        type="email"
+        placeholder="Adresse e-mail"
+        required>
+      <button type="submit">S’inscrire</button>
+    </form>
+
+    <p class="newsletter-success" hidden>
+      Vous êtes inscrit au journal.
+    </p>
+
+    <p class="newsletter-exists" hidden>
+      Cette adresse est déjà inscrite.
+    </p>
+
+  </div>
+</div>
+
+</body>
+</html>

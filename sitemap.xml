@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>https://simonesixx.com/</loc>
+    <priority>1.00</priority>
+  </url>
+
+  <url>
+    <loc>https://simonesixx.com/parfums.html</loc>
+    <priority>0.95</priority>
+  </url>
+
+  <url>
+    <loc>https://simonesixx.com/confections.html</loc>
+    <priority>0.95</priority>
+  </url>
+
+  <url>
+    <loc>https://simonesixx.com/collection.html</loc>
+    <priority>0.90</priority>
+  </url>
+
+  <url>
+    <loc>https://simonesixx.com/lookbook-ss25.html</loc>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://simonesixx.com/produit.html</loc>
+    <priority>0.90</priority>
+  </url>
+
+  <url>
+    <loc>https://simonesixx.com/events.html</loc>
+    <priority>0.70</priority>
+  </url>
+
+  <url>
+    <loc>https://simonesixx.com/contact.html</loc>
+    <priority>0.70</priority>
+  </url>
+
+  <url>
+    <loc>https://simonesixx.com/retours.html</loc>
+    <priority>0.50</priority>
+  </url>
+
+  <url>
+    <loc>https://simonesixx.com/panier.html</loc>
+    <priority>0.40</priority>
+  </url>
+
+  <url>
+    <loc>https://simonesixx.com/articles/article.html</loc>
+    <priority>0.80</priority>
+  </url>
+
+  <url>
+    <loc>https://simonesixx.com/legal.html</loc>
+    <priority>0.30</priority>
+  </url>
+
+</urlset>

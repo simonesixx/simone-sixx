@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+
+  <!-- Responsive mobile (OBLIGATOIRE) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Panier — Simone Sixx</title>
+
+  <link rel="icon" href="assets/images/favicon.png" type="image/png">
+
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="assets/css/style.css">
+
+  <!-- JS -->
+  <script src="assets/js/shop.js" defer></script>
+  <script src="assets/js/newsletter.js" defer></script>
+
+</head>
+
+<body>
+
+<header class="header-mobile">
+  <div class="header-mobile">
+  <div class="header-mobile-top">
+
+    <!-- MENU BURGER — GAUCHE -->
+    <button class="menu-toggle" aria-label="Ouvrir le menu">
+      Menu
+    </button>
+
+    <!-- LOGO — CENTRE -->
+    <div class="header-mobile-logo">
+      <a href="index.html">
+        <img src="assets/images/logo.png" alt="Simone Sixx">
+      </a>
+    </div>
+
+    <!-- PANIER — DROITE -->
+    <div class="header-mobile-actions">
+      <a href="panier.html">
+        Panier (<span id="cartCount">0</span>)
+    </div>
+
+  </div>
+
+  <!-- MENU DÉROULANT -->
+  <nav class="menu-mobile">
+    <a href="confections.html">Confections</a>
+    <a href="parfums.html">Parfums</a>
+    <a href="collection.html">Collections</a>
+    <a href="events.html">Évènements</a>
+
+    <div class="menu-secondary">
+      <a href="#journal">Journal</a>
+    </div>
+  </nav>
+</div>
+
+</header>
+
+<header>
+  <nav class="nav">
+    <div class="nav-left">
+      <a href="confections.html">Confections</a>
+      <a href="parfums.html">Parfums</a>
+      <a href="collection.html">Collections</a>
+      <a href="events.html">Évènements</a>
+    </div>
+
+    <div class="nav-logo">
+      <a href="index.html">
+        <img src="assets/images/logo.png" class="logo-header" alt="Simone Sixx">
+      </a>
+    </div>
+
+    <div class="nav-right">
+      <a href="#newsletter" class="nav-newsletter">Journal</a>
+      <span class="nav-separator"></span>
+      <a href="panier.html">
+        Panier (<span id="cartCount">0</span>)
+      </a>
+    </div>
+
+
+  </nav>
+</header>
+
+<main class="cart-page">
+
+  <h1>Panier</h1>
+
+  <div id="cartItems"></div>
+
+  <div class="cart-footer">
+    <p>Total : <span id="cartTotal">0,00 EUR</span></p>
+    <button class="add-to-cart" onclick="checkout()">Passer au paiement</button>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+
+    <div class="footer-left">
+      <p>© 2026 Simone Sixx</p>
+    </div>
+
+    <div class="footer-links">
+      <a href="retours.html">Demande de retour</a>
+      <a href="legal.html">Pages légales</a>
+      <a href="contact.html">Contact</a>
+    </div>
+
+  </div>
+</footer>
+
+<div class="newsletter-popup" id="newsletterPopup">
+  <div class="newsletter-box">
+
+    <button class="newsletter-close" onclick="closeNewsletter()">×</button>
+
+    <h2>Journal  Simone Sixx</h2>
+
+    <p>
+      Être informé des prochaines pièces,  
+      des évènements et publications.
+    </p>
+
+    <form id="newsletterForm">
+      <input
+        type="email"
+        placeholder="Adresse e-mail"
+    required
+  >
+      <button type="submit">S’inscrire</button>
+    </form>
+
+    <p class="newsletter-success" hidden>
+      Vous êtes inscrit au journal.
+    </p>
+
+    <p class="newsletter-exists" hidden>
+      Cette adresse est déjà inscrite.
+    </p>
+
+
+  </div>
+</div>
+
+</body>
+</html>

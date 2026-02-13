@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+
+  <!-- Responsive mobile (OBLIGATOIRE) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title id="pageTitle">Article — Simone Sixx</title>
+
+<link rel="icon" href="../assets/images/favicon.png" type="image/png">
+
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="../assets/css/style.css">
+
+  <!-- JS -->
+  <script src="../assets/js/articles.js" defer></script>
+  <script src="../assets/js/shop.js" defer></script>
+  <script src="../assets/js/newsletter.js" defer></script>
+
+</head>
+
+<body>
+
+<header class="header-mobile">
+  <div class="header-mobile">
+  <div class="header-mobile-top">
+
+    <!-- MENU BURGER — GAUCHE -->
+    <button class="menu-toggle" aria-label="Ouvrir le menu">
+      Menu
+    </button>
+
+    <!-- LOGO — CENTRE -->
+    <div class="header-mobile-logo">
+      <a href="../index.html">
+        <img src="../assets/images/logo.png" alt="Simone Sixx">
+      </a>
+    </div>
+
+    <!-- PANIER — DROITE -->
+    <div class="header-mobile-actions">
+      <a href="../panier.html">
+        Panier (<span id="cartCount">0</span>)
+      </a>
+    </div>
+
+  </div>
+
+  <!-- MENU DÉROULANT -->
+  <nav class="menu-mobile">
+    <a href="../confections.html">Confections</a>
+    <a href="../parfums.html">Parfums</a>
+    <a href="../collection.html">Collections</a>
+    <a href="../events.html">Évènements</a>
+
+    <div class="menu-secondary">
+      <a href="#journal">Journal</a>
+    </div>
+  </nav>
+</div>
+
+</header>
+
+<header>
+  <nav class="nav">
+    <div class="nav-left">
+      <a href="../confections.html">Confections</a>
+      <a href="../parfums.html">Parfums</a>
+      <a href="../collection.html">Collections</a>
+      <a href="../events.html" class="active">Évènements</a>
+    </div>
+
+    <div class="nav-logo">
+      <a href="../index.html">
+        <img src="../assets/images/logo.png" class="logo-header" alt="Simone Sixx">
+      </a>
+    </div>
+
+ <div class="nav-right">
+  <span class="nav-separator"></span>
+  <a href="../panier.html">
+    Panier (<span id="cartCount">0</span>)
+  </a>
+</div>
+
+  </nav>
+</header>
+
+<main class="article-page">
+
+  <div class="article-header">
+    <div class="article-meta">
+      <span class="article-date" id="articleDate"></span>
+    </div>
+    <h1 class="article-title" id="articleTitle"></h1>
+  </div>
+
+  <div class="article-divider"></div>
+
+  <div class="article-split">
+
+    <div class="article-text" id="articleContent">
+    </div>
+
+    <div class="article-image">
+      <div class="carousel-container" id="carouselContainer">
+        <img id="articleImage" src="" alt="" class="carousel-image">
+        <div class="carousel-nav mobile-only" id="carouselNav"></div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+
+    <div class="footer-left">
+      <p>© 2026 Simone Sixx</p>
+    </div>
+
+    <div class="footer-links">
+      <a href="../retours.html">Demande de retour</a>
+      <a href="../legal.html">Pages légales</a>
+      <a href="../contact.html">Contact</a>
+    </div>
+
+  </div>
+</footer>
+
+<!-- ======================
+     POPUP JOURNAL
+====================== -->
+
+<div class="newsletter-popup" id="newsletterPopup">
+  <div class="newsletter-box">
+
+    <button class="newsletter-close" onclick="closeNewsletter()">×</button>
+
+    <h2>Journal Simone Sixx</h2>
+
+    <p>
+      Être informé des prochaines pièces,<br>
+      des évènements et publications.
+    </p>
+
+   <form id="newsletterForm">
+  <input
+    type="email"
+    placeholder="Adresse e-mail"
+    required
+  >
+  <button type="submit">S'inscrire</button>
+</form>
+
+<p class="newsletter-success" hidden>
+  Vous êtes inscrit au journal.
+</p>
+
+<p class="newsletter-exists" hidden>
+  Cette adresse est déjà inscrite.
+</p>
+
+  </div>
+</div>
+
+<script>
+  // Carrousel des images
+  let currentImageIndex = 0;
+
+  // Charger l'article au chargement de la page
+  document.addEventListener('DOMContentLoaded', function() {
+    const articleId = getArticleIdFromURL();
+    const article = getArticleById(articleId);
+
+    if (article) {
+      // Remplir les infos de l'article
+      document.getElementById('pageTitle').textContent = article.title + ' — Simone Sixx';
+      document.getElementById('articleTitle').textContent = article.title;
+      document.getElementById('articleDate').textContent = article.date;
+      document.getElementById('articleContent').innerHTML = article.content;
+      document.getElementById('articleImage').src = '../assets/images/' + article.image;
+      document.getElementById('articleImage').alt = article.title;
+
+      // Initialiser le carrousel si images disponibles
+      if (article.images && article.images.length > 1) {
+        initCarousel(article);
+      }
+
+      updateCartCount();
+    } else {
+      alert('Article non trouvé');
+    }
+  });
+
+  function initCarousel(article) {
+    const carouselNav = document.getElementById('carouselNav');
+    const articleImage = document.getElementById('articleImage');
+
+    // Créer les points de navigation
+    article.images.forEach((img, index) => {
+      const dot = document.createElement('div');
+      dot.className = 'carousel-dot' + (index === 0 ? ' active' : '');
+      dot.addEventListener('click', () => goToSlide(index, article));
+      carouselNav.appendChild(dot);
+    });
+
+    // Gestion du swipe mobile
+    let touchStartX = 0;
+    const carouselContainer = document.getElementById('carouselContainer');
+
+    carouselContainer.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+    });
+
+    carouselContainer.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const diff = touchStartX - touchEndX;
+
+      if (diff > 50) {
+        // Swipe vers la gauche → image suivante
+        nextSlide(article);
+      } else if (diff < -50) {
+        // Swipe vers la droite → image précédente
+        prevSlide(article);
+      }
+    });
+  }
+
+  function goToSlide(index, article) {
+    currentImageIndex = index;
+    const articleImage = document.getElementById('articleImage');
+    articleImage.src = '../assets/images/' + article.images[index];
+
+    // Mettre à jour les dots
+    document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === index);
+    });
+  }
+
+  function nextSlide(article) {
+    currentImageIndex = (currentImageIndex + 1) % article.images.length;
+    goToSlide(currentImageIndex, article);
+  }
+
+  function prevSlide(article) {
+    currentImageIndex = (currentImageIndex - 1 + article.images.length) % article.images.length;
+    goToSlide(currentImageIndex, article);
+  }
+</script>
+
+</body>
+</html>
