@@ -1,13 +1,17 @@
 // Liste complète des produits
+// Important: exposée sur window pour être réutilisée par l'admin et le catalogue dynamique.
 
-
-const products = [
+window.products = [
   {
     id: "perfecto-en-cuir-noir",
     name: "Perfecto en cuir noir",
     price: 310,
-    image: "produit.jpg",
-    images: ["produit.jpg", "look2.jpg", "look3.jpg"],
+    image: "assets/images/look1.jpg",
+    images: ["assets/images/look1.jpg", "assets/images/look2.jpg", "assets/images/look3.jpg"],
+    collection: "ss26",
+    level1: "vestiaire",
+    level2: "feminin",
+    level3: "manteaux",
     description: "Perfecto fait de cuir légèrement usé, zips argentés et boutons métalliques. Coupe ajustée, épaules légèrement accentuées, col rabattu. Des nuances sombres dans le cuir qui captent la lumière.",
     sizes: [
       { label: "Une", stock: 0 },
@@ -32,8 +36,12 @@ const products = [
     id: "chemise-soie-noir",
     name: "Chemise soie noir",
     price: 250,
-    image: "look2.jpg",
-    images: ["look2.jpg", "produit.jpg"],
+    image: "assets/images/look2.jpg",
+    images: ["assets/images/look2.jpg", "assets/images/look1.jpg"],
+    collection: "ss26",
+    level1: "vestiaire",
+    level2: "feminin",
+    level3: "vestes",
     description: "Chemise en soie pure, fluide et élégante. Manches longues, col classique et boutons noirs. Idéale pour créer des looks sophistiqués et intemporels.",
     sizes: [
       { label: "Une", stock: 2 },
@@ -58,8 +66,12 @@ const products = [
     id: "manteau-long-homme",
     name: "Manteau long homme",
     price: 420,
-    image: "produit3.jpg",
-    images: ["produit3.jpg", "look3.jpg"],
+    image: "assets/images/look3.jpg",
+    images: ["assets/images/look3.jpg"],
+    collection: "ss26",
+    level1: "vestiaire",
+    level2: "masculin",
+    level3: "manteaux",
     description: "Manteau long structuré en laine premium. Coupe droite et intemporelle avec détails soignés. Parfait pour les saisons froides.",
     sizes: [
       { label: "Une", stock: 1 },
@@ -84,8 +96,12 @@ const products = [
     id: "robe-fluide",
     name: "Robe fluide",
     price: 340,
-    image: "produit4.jpg",
-    images: ["produit4.jpg", "look4.jpg"],
+    image: "assets/images/look4.jpg",
+    images: ["assets/images/look4.jpg"],
+    collection: "ss26",
+    level1: "vestiaire",
+    level2: "feminin",
+    level3: "robes",
     description: "Robe en tissu fluide et léger. Coupe ajustée à la taille avec une jupe qui flotte. Élégante et confortable pour toutes les occasions.",
     sizes: [
       { label: "Une", stock: 2 },
@@ -110,8 +126,12 @@ const products = [
     id: "haut-soie",
     name: "Haut en soie",
     price: 210,
-    image: "produit5.jpg",
-    images: ["produit5.jpg", "look5.jpg"],
+    image: "assets/images/look5.jpg",
+    images: ["assets/images/look5.jpg"],
+    collection: "ss26",
+    level1: "vestiaire",
+    level2: "feminin",
+    level3: "hauts",
     description: "Haut délicat en soie douce. Manches courtes et col rond. Parfait pour les looks minimalistes et raffinés.",
     sizes: [
       { label: "Une", stock: 3 },
@@ -136,8 +156,12 @@ const products = [
     id: "veste-structuree",
     name: "Veste structurée",
     price: 360,
-    image: "produit6.jpg",
-    images: ["produit6.jpg", "look6.jpg"],
+    image: "assets/images/look6.jpg",
+    images: ["assets/images/look6.jpg"],
+    collection: "ss26",
+    level1: "vestiaire",
+    level2: "masculin",
+    level3: "vestes",
     description: "Veste structurée avec lignes épurées. Coupe ajustée et finitions impeccables. Un basique incontournable.",
     sizes: [
       { label: "Une", stock: 1 },
@@ -162,11 +186,15 @@ const products = [
 
 // Fonction pour récupérer un produit par ID
 function getProductById(id) {
-  return products.find(product => product.id === id);
+  return (window.products || []).find(product => product.id === id);
 }
 
 // Fonction pour récupérer l'ID depuis l'URL
 function getProductIdFromURL() {
   const params = new URLSearchParams(window.location.search);
-  return params.get('id') || 'perfecto-cuir-noir'; // Par défaut le premier produit
+  return params.get('id') || 'perfecto-en-cuir-noir'; // Par défaut le premier produit
 }
+
+// Exposer les helpers (compat avec l'existant)
+window.getProductById = getProductById;
+window.getProductIdFromURL = getProductIdFromURL;

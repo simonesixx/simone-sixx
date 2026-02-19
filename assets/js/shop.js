@@ -14,52 +14,34 @@ function formatEUR(value) {
 // PANIER (GLOBAL)
 // ======================
 
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+function loadCart() {
+  try {
+    const raw = localStorage.getItem("cart");
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
-function saveCart() {
-  localStorage.setItem("cart", JSON.stringify(cart));
+function saveCart(cart) {
+  localStorage.setItem("cart", JSON.stringify(Array.isArray(cart) ? cart : []));
 }
 
 function updateCartCount() {
+  const cart = loadCart();
   document.querySelectorAll("#cartCount").forEach(el => {
+    el.textContent = cart.length;
+  });
+
+  // certains templates utilisent une classe plutôt qu'un id
+  document.querySelectorAll(".cartCount").forEach(el => {
     el.textContent = cart.length;
   });
 }
 
-  updateCartCount();
 
-
-// ======================
-  // CONFECTIONS — TAILLES
-// ======================
-
-  let selectedSize = null;
-
-function selectSize(el) {
-    if (el.classList.contains("disabled")) return;
-
-  document.querySelectorAll(".sizes .size").forEach(s => s.classList.remove("selected"));
-    el.classList.add("selected");
-  selectedSize = el.innerText;
-}
-
-function addToCart() {
-    if (!selectedSize) {
-      alert("Veuillez sélectionner une taille.");
-      return;
-    }
-
-  const product = {
-    name: "Perfecto en cuir noir reflet kaki",
-      size: selectedSize,
-    price: 310
-  };
-
-  cart.push(product);
-    saveCart();
-    updateCartCount();
-    alert("Ajouté au panier");
-}
+updateCartCount();
 
 
 // ======================
@@ -67,15 +49,21 @@ function addToCart() {
 // ======================
 
 let activeCollection = null; // ex: "ss26"
-let level1 = "vestiaire";
-  let level2 = null;
-  let level3 = null;
+let level1 = null;
+let level2 = null;
+let level3 = null;
+
+// Tant que l'utilisateur n'a pas cliqué sur un filtre,
+// on affiche tout le catalogue (évite de "cacher" des produits au chargement).
+let hasUserFiltered = false;
 
 // ======================
 // ÉLÉMENTS DOM
 // ======================
 
-const items = document.querySelectorAll(".item");
+function getItems() {
+  return document.querySelectorAll(".item");
+}
 
 const collectionSpans = document.querySelectorAll("#collectionLevel span");
 const level1Spans = document.querySelectorAll("#level1 span");
@@ -85,6 +73,32 @@ const level3Spans = document.querySelectorAll("#level3 span");
 const level2Block = document.getElementById("level2");
 const level3Block = document.getElementById("level3");
 
+function initFiltersFromDOM() {
+  const activeCollectionSpan = document.querySelector("#collectionLevel span.active");
+  activeCollection = activeCollectionSpan?.dataset?.collection || null;
+
+  const activeLevel1Span = document.querySelector("#level1 span.active");
+  level1 = activeLevel1Span?.dataset?.level1 || null;
+
+  const activeLevel2Span = document.querySelector("#level2 span.active");
+  level2 = activeLevel2Span?.dataset?.level2 || null;
+
+  const activeLevel3Span = document.querySelector("#level3 span.active");
+  level3 = activeLevel3Span?.dataset?.level3 || null;
+
+  if (level1 === "vestiaire") {
+    level2Block?.classList.add("open");
+    if (level2) {
+      level3Block?.classList.add("open");
+    } else {
+      level3Block?.classList.remove("open");
+    }
+  } else {
+    level2Block?.classList.remove("open");
+    level3Block?.classList.remove("open");
+  }
+}
+
 // ======================
 // FONCTION DE FILTRAGE
 // ======================
@@ -92,7 +106,22 @@ const level3Block = document.getElementById("level3");
 function filterProducts() {
     let visibleCount = 0;
 
+  const items = getItems();
+
+  // Comportement par défaut : tout afficher tant que l'utilisateur n'a pas filtré
+  // (et qu'on n'est pas en mode filtre collection).
+  if (!hasUserFiltered && !activeCollection) {
     items.forEach(item => {
+      item.style.display = "block";
+      visibleCount++;
+    });
+
+    const emptyState = document.getElementById("emptyState");
+    if (emptyState) emptyState.style.display = visibleCount === 0 ? "block" : "none";
+    return;
+  }
+
+  items.forEach(item => {
     const itemCollection = item.dataset.collection || null;
       const l1 = item.dataset.level1;
       const l2 = item.dataset.level2;
@@ -108,7 +137,8 @@ function filterProducts() {
 
     // --- filtres classiques
     const match1 = l1 === level1;
-    const match2 = level2 === null || l2 === level2;
+    const l2Tokens = (l2 || "").split(/\s+/).filter(Boolean);
+    const match2 = level2 === null || level2 === "" || l2Tokens.includes(level2);
     const match3 = level3 === null || l3 === level3;
 
     const isVisible = match1 && match2 && match3;
@@ -129,6 +159,8 @@ function filterProducts() {
 
 collectionSpans.forEach(span => {
     span.addEventListener("click", () => {
+
+  hasUserFiltered = true;
 
     // reset catégories
     level1 = null;
@@ -158,6 +190,8 @@ collectionSpans.forEach(span => {
 
 level1Spans.forEach(span => {
     span.addEventListener("click", () => {
+
+  hasUserFiltered = true;
 
     // désactiver collection
     activeCollection = null;
@@ -194,6 +228,8 @@ level1Spans.forEach(span => {
 level2Spans.forEach(span => {
     span.addEventListener("click", () => {
 
+  hasUserFiltered = true;
+
     // Vérifier si level2 est ouvert
     if (!level2Block?.classList.contains("open")) {
       return;
@@ -226,6 +262,8 @@ level2Spans.forEach(span => {
 level3Spans.forEach(span => {
     span.addEventListener("click", () => {
 
+  hasUserFiltered = true;
+
     // Vérifier si level3 est ouvert
     if (!level3Block?.classList.contains("open")) {
       return;
@@ -250,7 +288,8 @@ level3Spans.forEach(span => {
 // INITIALISATION
 // ======================
 
-  filterProducts();
+initFiltersFromDOM();
+filterProducts();
 
 
 
@@ -264,6 +303,8 @@ function renderCart() {
   const cartTotal = document.getElementById("cartTotal");
 
   if (!cartContainer || !cartTotal) return;
+
+  const cart = loadCart();
 
   cartContainer.innerHTML = "";
   let total = 0;
@@ -287,8 +328,9 @@ function renderCart() {
 }
 
 function removeItem(index) {
+  const cart = loadCart();
   cart.splice(index, 1);
-  saveCart();
+  saveCart(cart);
   updateCartCount();
   renderCart();
 }
@@ -372,8 +414,9 @@ function addPerfumeToCart() {
     price: selectedParfumPrice
   };
 
+  const cart = loadCart();
   cart.push(product);
-  saveCart();
+  saveCart(cart);
   updateCartCount();
 
   alert("Parfum ajouté au panier");

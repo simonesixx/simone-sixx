@@ -301,7 +301,11 @@ header {
 }
 
 .mobile-only {
-  display: none;
+  display: none !important;
+}
+
+.desktop-only {
+  display: block;
 }
 
 /* =========================
@@ -322,30 +326,6 @@ header {
 /* =========================
    PARFUM — MISE EN PAGE
 ========================= */
-
-.product-page.parfum {
-  grid-template-columns: 1.2fr 0.8fr;   /* image plus importante */
-  gap: 120px;
-  padding-top: 140px;
-}
-
-.product-page.parfum .image img {
-  height: 85vh;
-  object-fit: cover;
-}
-
-.product-page.parfum .info {
-  padding-top: 120px;   /* le texte descend = rituel */
-}
-
-.product-page.parfum .description {
-  font-size: 13.5px;
-  line-height: 1.8;
-  max-width: 360px;
-  margin-bottom: 48px;   /* espace plus aéré */
-  opacity: 0.85;
-  color: #1a1a1a;
-}
 
 
 
@@ -670,18 +650,25 @@ header {
 ========================= */
 
 .product-page.parfum {
-  padding: 100px 120px;
-  gap: 60px;
+  /* Grande image à gauche + colonne texte plus étroite (référence) */
+  grid-template-columns: 1.4fr 0.6fr;
+  padding: 0 120px 0 0;
+  gap: 80px;
+  align-items: stretch;
 }
 
-/* Image plus contenue */
 .product-page.parfum .image img {
-  max-width: 520px;
+  max-width: none;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  min-height: 85vh;
 }
 
 /* Bloc texte plus étroit */
 .product-page.parfum .info {
   max-width: 420px;
+  padding-top: 40px;
 }
 
 /* Titre plus discret */
@@ -714,7 +701,7 @@ header {
 .product-page.parfum .description {
   font-size: 13px;
   line-height: 1.6;
-  max-width: 360px;
+  max-width: 340px;
 }
 
 /* Formats plus délicats */
@@ -750,56 +737,18 @@ header {
   font-weight: 600;
   opacity: 1;
 }
-
-/* Bouton plus fin */
-.product-page.parfum .add-to-cart {
-  margin-top: 0;
-  margin-bottom: 60px;
-  font-size: 11px;
-  letter-spacing: 2px;
-  padding: 14px 0;
-}
 /* Centrer visuellement l’image du parfum */
 .product-page.parfum .image {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
+  align-self: stretch;
 }
 
 .product-page.parfum .image img {
   display: block;
-  margin: 0 auto;
+  margin: 0;
 }
 
-/* Accordéons parfum */
-.product-page.parfum .accordion {
-  margin-top: 0;
-}
-
-.product-page.parfum .accordion-item {
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  border-bottom: none;
-}
-
-.product-page.parfum .accordion-item:last-child {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.product-page.parfum .accordion-toggle {
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  padding: 18px 0;
-  opacity: 0.6;
-  transition: opacity 0.3s ease;
-}
-
-.product-page.parfum .accordion-toggle:hover {
-  opacity: 0.9;
-}
-
-.product-page.parfum .accordion-content {
-  padding-bottom: 20px;
-}
 
 .product-page.parfum .composition-text,
 .product-page.parfum .confectionnee-text {
@@ -807,6 +756,11 @@ header {
   line-height: 1.7;
   opacity: 0.75;
   color: #1a1a1a;
+}
+
+/* Sur Parfums: coller le footer au bloc (pas de grand blanc) */
+.product-page.parfum + .site-footer {
+  margin-top: 0;
 }
 
 /* =========================
@@ -2433,18 +2387,22 @@ header {
     margin-left: calc(-50vw + 50%);
     position: relative;
     background: #f2f2f2;
-    height: 70vh;
+    height: 82vh;
   }
 
   .product-page .image img {
     width: 100vw;
-    height: 70vh;
+    height: 82vh;
     object-fit: cover;
     display: block;
   }
 
   .mobile-only {
     display: flex !important;
+  }
+
+  .desktop-only {
+    display: none !important;
   }
 
   /* ===============================
@@ -2603,14 +2561,15 @@ header {
 
   .product-page.parfum .image img {
     width: 100%;
-    height: 78vh;              /* présence forte mais pas écrasante */
+    height: 52vh;              /* laisse apparaître le titre + type sans scroll */
+    height: 52svh;
     object-fit: cover;
     display: block;
   }
 
   /* INFOS */
   .product-page.parfum .info {
-    padding: 40px 22px 60px;
+    padding: 22px 22px 60px;
     max-width: 520px;
     margin: 0 auto;
   }
@@ -2668,33 +2627,6 @@ header {
     width: 180px;
     font-size: 12px;
     padding: 10px 0;
-  }
-
-  /* BOUTON */
-  .product-page.parfum .add-to-cart {
-    width: 100%;
-    margin: 0 0 60px;
-    padding: 16px 0;
-    font-size: 12px;
-    letter-spacing: 3px;
-    border-bottom: 1px solid black;
-    text-align: center;
-  }
-
-  /* ACCORDÉONS */
-  .product-page.parfum .accordion {
-    margin-top: 30px;
-  }
-
-  .product-page.parfum .accordion-toggle {
-    font-size: 11px;
-    letter-spacing: 2px;
-  }
-
-  .product-page.parfum .accordion-content p {
-    font-size: 13px;
-    line-height: 1.7;
-    opacity: 0.85;
   }
 
 }
