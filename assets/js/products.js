@@ -1,5 +1,5 @@
 // Liste complète des produits
-// Important: exposée sur window pour être réutilisée par l'admin et le catalogue dynamique.
+// Important: exposée sur window pour être réutilisée par le catalogue dynamique.
 
 window.products = [
   {

@@ -55,6 +55,47 @@ document.addEventListener("DOMContentLoaded", () => {
     renderList();
   }
 
+  function exportProductsJson() {
+    const products = load();
+    const json = JSON.stringify(products || [], null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "products.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+  }
+
+  async function importProductsJson(file) {
+    if (!file) return;
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    if (!Array.isArray(parsed)) {
+      alert("Fichier invalide : le JSON doit être un tableau de produits.");
+      return;
+    }
+
+    save(parsed);
+    alert("Produits importés dans le navigateur ! Pense à exporter puis commit/push assets/data/products.json pour les publier.");
+  }
+
+  document.getElementById("exportProductsBtn")?.addEventListener("click", exportProductsJson);
+  document.getElementById("importProductsFile")?.addEventListener("change", async (e) => {
+    const file = e.target?.files?.[0];
+    try {
+      await importProductsJson(file);
+    } catch {
+      alert("Impossible d’importer ce fichier.");
+    } finally {
+      try { e.target.value = ""; } catch { /* ignore */ }
+    }
+  });
+
   function addSizeRow(valueLabel = "", valueStock = 0) {
     sizeCount++;
     const container = document.getElementById("sizesContainer");
@@ -241,7 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <p>${Number(p.price || 0).toFixed(2)} EUR • ID: ${p.id || ""}</p>
           </div>
           <div class="product-actions">
-            <a class="edit-btn" href="produit.html?id=${encodeURIComponent(p.id || "")}" target="_blank" rel="noopener noreferrer" title="Voir la fiche" aria-label="Voir la fiche" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
+            <a class="edit-btn" href="produit.html?id=${encodeURIComponent(p.id || "")}&preview=1" target="_blank" rel="noopener noreferrer" title="Voir la fiche (preview)" aria-label="Voir la fiche (preview)" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
               👁️
             </a>
             <button class="move-btn" data-move-up="${idx}" ${idx === 0 ? "disabled" : ""} title="Monter">↑</button>
