@@ -4,24 +4,52 @@
     return params.get("id");
   }
 
-  function getAllProducts() {
+  const params = new URLSearchParams(window.location.search);
+const preview = params.get("preview") === "1";
+
+let allProductsCache = null;
+
+async function getAllProductsAsync() {
+  if (Array.isArray(allProductsCache)) return allProductsCache;
+
+  // Mode preview : utiliser le stockage local (admin local)
+  if (preview) {
     try {
-      window.ProductStore?.seedFromGlobalProducts();
       const stored = window.ProductStore?.loadProducts?.() || [];
-      if (stored.length > 0) return stored;
+      if (stored.length > 0) {
+        allProductsCache = stored;
+        return stored;
+      }
     } catch {
       // ignore
     }
-
-    if (Array.isArray(window.products)) return window.products;
-    return [];
   }
 
-  function getProductByIdFromStore(id) {
-    const products = getAllProducts();
-    return products.find(p => p.id === id);
+  // Site public : JSON publié
+  try {
+    const published = await window.loadPublishedProducts?.();
+    if (Array.isArray(published) && published.length > 0) {
+      allProductsCache = published;
+      return published;
+    }
+  } catch {
+    // ignore
   }
 
+  // Fallback : liste embarquée
+  if (Array.isArray(window.products)) {
+    allProductsCache = window.products;
+    return window.products;
+  }
+
+  allProductsCache = [];
+  return [];
+}
+
+async function getProductById(id) {
+  const products = await getAllProductsAsync();
+  return products.find(p => p.id === id);
+}
   let selectedProductSizeLabel = null;
   let selectedProductSizeStock = 0;
 
@@ -35,9 +63,9 @@
     selectedProductSizeStock = Number(stock) || 0;
   }
 
-  function addToCart() {
+  async function addToCart() {
     const productId = getProductIdFromURL();
-    const product = getProductByIdFromStore(productId);
+    const product = productId ? await getProductById(productId) : null;
 
     if (!product) {
       alert("Produit non trouvé.");
@@ -79,13 +107,13 @@
   // Exposé uniquement ce qui est appelé par le HTML
   window.addToCart = addToCart;
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
     try {
       const productId = getProductIdFromURL();
-      const product = productId ? getProductByIdFromStore(productId) : null;
+      const product = productId ? await getProductById(productId) : null;
 
       if (!product) {
-        const all = getAllProducts();
+        const all = await getAllProductsAsync();
         const ids = all.map(p => p && p.id).filter(Boolean);
         const page = document.querySelector(".product-page");
         if (page) {
