@@ -98,12 +98,17 @@ body.home .hero {
 body.home .hero img {
   width: 100%;
   max-width: none;
+  height: 760px;
   display: block;
 }
 
 @media (max-width: 768px) {
   body.home .hero {
     padding: 16px;
+  }
+
+  body.home .hero img {
+    height: 78vh;
   }
 }
 
