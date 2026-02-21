@@ -943,7 +943,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <p>${lb.season || ""} • ID: ${lb.id || ""}</p>
             </div>
             <div class="product-actions">
-              <a class="edit-btn" href="collection.html?preview=1" target="_blank" rel="noopener noreferrer" title="Voir Collections (preview)" aria-label="Voir Collections (preview)" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
+              <a class="edit-btn" href="collections/?preview=1" target="_blank" rel="noopener noreferrer" title="Voir Collections (preview)" aria-label="Voir Collections (preview)" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
                 📚
               </a>
               <a class="edit-btn" href="lookbook-ss25.html?id=${encodeURIComponent(lb.id || "")}&preview=1" target="_blank" rel="noopener noreferrer" title="Voir le lookbook (preview)" aria-label="Voir le lookbook (preview)" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">

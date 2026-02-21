@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -7,15 +7,14 @@
   <!-- Responsive mobile (OBLIGATOIRE) -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Évènements — Simone Sixx</title>
+  <title>Collections — Simone Sixx</title>
 
-<link rel="icon" href="assets/images/favicon.png" type="image/png">
-
+  <link rel="icon" href="assets/images/favicon.png" type="image/png">
 
   <link rel="stylesheet" href="assets/css/style.css">
   <script src="assets/js/storage.js" defer></script>
-  <script src="assets/js/published-articles.js" defer></script>
-  <script src="assets/js/articles.js" defer></script>
+  <script src="assets/js/published-lookbooks.js" defer></script>
+  <script src="assets/js/lookbooks.js" defer></script>
   <script src="assets/js/shop.js" defer></script>
   <script src="assets/js/newsletter.js" defer></script>
 
@@ -43,7 +42,6 @@
     <div class="header-mobile-actions">
       <a href="panier.html">
         Panier (<span id="cartCount">0</span>)
-      </a>
     </div>
 
   </div>
@@ -68,8 +66,8 @@
     <div class="nav-left">
       <a href="confections.html">Confections</a>
       <a href="parfums.html">Parfums</a>
-      <a href="collections/">Collections</a>
-      <a href="events.html" class="active">Évènements</a>
+      <a href="collections/" class="active">Collections</a>
+      <a href="events.html">Évènements</a>
     </div>
 
     <div class="nav-logo">
@@ -79,25 +77,19 @@
     </div>
 
     <div class="nav-right">
-      <a href="#newsletter" class="nav-newsletter">Journal</a>
+      <a href="#" class="nav-newsletter">Journal</a>
       <span class="nav-separator"></span>
       <a href="panier.html">
         Panier (<span id="cartCount">0</span>)
       </a>
     </div>
-
   </nav>
 </header>
 
-<main class="events-page">
+<main class="collections-page">
 
-  <div class="events-title">
-    <h1>Évènements</h1>
-    <p>Journal de Simone Sixx</p>
-  </div>
+  <div id="collectionsList"></div>
 
-  <div class="events-list" id="articlesList">
-  </div>
 </main>
 
 <footer class="site-footer">
@@ -114,6 +106,10 @@
   </div>
 </footer>
 
+<!-- ======================
+     POPUP JOURNAL
+====================== -->
+
 <div class="newsletter-popup" id="newsletterPopup">
   <div class="newsletter-box">
 
@@ -122,17 +118,17 @@
     <h2>Journal Simone Sixx</h2>
 
     <p>
-      Être informé des prochaines pièces,  
+      Être informé des prochaines pièces,<br>
       des évènements et publications.
     </p>
 
-<form id="newsletterForm">
+  <form id="newsletterForm">
   <input
     type="email"
     placeholder="Adresse e-mail"
     required
   >
-  <button type="submit">S'inscrire</button>
+  <button type="submit">S’inscrire</button>
 </form>
 
 <p class="newsletter-success" hidden>
@@ -143,8 +139,11 @@
   Cette adresse est déjà inscrite.
 </p>
 
+
+
   </div>
 </div>
+
 
 </body>
 </html>
