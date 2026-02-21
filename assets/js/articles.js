@@ -98,6 +98,42 @@
     return `${prefix}${s}`;
   }
 
+  function escapeHtml(text) {
+    return String(text || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function looksLikeHtml(text) {
+    const t = String(text || "");
+    // détecte des balises HTML courantes
+    return /<\s*\/?\s*[a-zA-Z][\s\S]*?>/.test(t);
+  }
+
+  function formatArticleContent(rawText) {
+    const raw = String(rawText || "").replace(/\r\n?/g, "\n");
+    const escaped = escapeHtml(raw);
+
+    // Paragraphes = lignes vides. Dans un paragraphe, retour à la ligne = <br>
+    const paragraphs = escaped
+      .split(/\n\s*\n+/)
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => p.replace(/\n/g, "<br>"));
+
+    let html = paragraphs.map((p) => `<p>${p}</p>`).join("\n");
+
+    // Gras: **texte**
+    html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    // Italique: *texte*
+    html = html.replace(/(^|[^*])\*(?!\s)(.+?)(?!\s)\*(?!\*)/g, "$1<em>$2</em>");
+
+    return html;
+  }
+
   let memo = null;
   let inFlight = null;
 
@@ -208,7 +244,13 @@
 
     titleEl.textContent = article.title || "";
     dateEl.textContent = article.date || "";
-    contentEl.innerHTML = article.content || "";
+
+    const content = article.content || "";
+    if (looksLikeHtml(content)) {
+      contentEl.innerHTML = content;
+    } else {
+      contentEl.innerHTML = formatArticleContent(content);
+    }
 
     const prefix = "../assets/images/";
 
