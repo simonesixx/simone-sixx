@@ -545,10 +545,13 @@ body.home .site-footer {
     font-size: 13px;
     line-height: 1.6;
     max-width: 340px;
-    margin-bottom: 40px;
+    margin-bottom: 18px;
   }
 
   .product-page:not(.parfum) .sizes {
+    max-width: 340px;
+    border-top: 1px solid rgba(0, 0, 0, 0.15);
+    padding-top: 26px;
     margin-top: 0;
     margin-bottom: 50px;
   }
