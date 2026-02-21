@@ -112,15 +112,16 @@ body.home .site-footer {
   body.home .hero {
     padding: 16px;
     margin-top: 10px;
-    margin-bottom: 52px;
+    margin-bottom: 24px;
   }
 
   body.home .hero img {
-    height: 78vh;
+    height: 88vh;
+    height: 88svh;
   }
 
   body.home .site-footer {
-    margin-top: 46px;
+    margin-top: 24px;
   }
 }
 
