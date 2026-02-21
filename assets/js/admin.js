@@ -834,6 +834,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const lookbookSubmitBtn = document.getElementById("lookbookSubmitBtn");
   const lookbookCancelBtn = document.getElementById("lookbookCancelBtn");
   const lookbookFormSection = document.getElementById("lookbookFormSection");
+  const lookbookImagesFilesInput = document.getElementById("lookbookImagesFiles");
 
   let editingLookbookIndex = null;
 
@@ -901,6 +902,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const imgs = Array.isArray(lb.images) ? lb.images.filter(Boolean) : [];
     document.getElementById("lookbookImages").value = imgs.join("\n");
 
+    if (lookbookImagesFilesInput) lookbookImagesFilesInput.value = "";
+
     if (lookbookFormSection) lookbookFormSection.classList.add("editing");
     if (lookbookSubmitBtn) lookbookSubmitBtn.textContent = "Mettre à jour le lookbook";
     if (lookbookCancelBtn) lookbookCancelBtn.classList.add("visible");
@@ -914,6 +917,8 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch {
       // ignore
     }
+
+    if (lookbookImagesFilesInput) lookbookImagesFilesInput.value = "";
 
     if (lookbookFormSection) lookbookFormSection.classList.remove("editing");
     if (lookbookSubmitBtn) lookbookSubmitBtn.textContent = "Ajouter le lookbook";
@@ -1030,6 +1035,19 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   lookbookCancelBtn?.addEventListener("click", cancelEditLookbook);
+
+  lookbookImagesFilesInput?.addEventListener("change", (e) => {
+    const textarea = document.getElementById("lookbookImages");
+    if (!textarea) return;
+
+    const files = Array.from(e.target?.files || []).filter(Boolean);
+    const names = files
+      .filter((f) => !f.type || String(f.type).startsWith("image/"))
+      .map((f) => String(f.name || "").trim())
+      .filter(Boolean);
+
+    textarea.value = Array.from(new Set(names)).join("\n");
+  });
 
   lookbookForm?.addEventListener("submit", (e) => {
     e.preventDefault();

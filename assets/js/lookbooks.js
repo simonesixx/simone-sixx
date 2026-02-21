@@ -1,18 +1,5 @@
 (function () {
-  const DEFAULT_LOOKBOOKS = [
-    {
-      id: "ss26",
-      title: "Printemps & Été 2026",
-      season: "Première Collection",
-      images: ["look1.jpg", "look2.jpg", "look3.jpg", "look4.jpg", "look5.jpg", "look6.jpg"]
-    },
-    {
-      id: "aw26",
-      title: "Automne & Hiver 2026",
-      season: "Première Collection",
-      images: ["look3.jpg", "look4.jpg", "look5.jpg", "look6.jpg", "look1.jpg", "look2.jpg"]
-    }
-  ];
+
 
   function getPreviewEnabled() {
     const params = new URLSearchParams(window.location.search);
@@ -53,7 +40,7 @@
       }
 
       if (list.length === 0) {
-        list = DEFAULT_LOOKBOOKS;
+        list = [];
       }
 
       memo = list;
@@ -118,7 +105,7 @@
 
     const list = await getLookbooks();
     const idFromUrl = getLookbookIdFromURL();
-    const defaultId = list[0]?.id || DEFAULT_LOOKBOOKS[0]?.id || "";
+    const defaultId = list[0]?.id || "";
     const lookbookId = idFromUrl || defaultId;
 
     const lb = await getLookbookById(lookbookId);
