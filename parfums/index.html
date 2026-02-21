@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <base href="../">
+
+  <!-- Responsive mobile (OBLIGATOIRE) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>La Chambre du Sixième Étage — Simone Sixx</title>
+
+<link rel="icon" href="assets/images/favicon.png" type="image/png">
+
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="assets/css/style.css">
+
+  <!-- JS -->
+  <script src="assets/js/shop.js" defer></script>
+<script src="assets/js/newsletter.js" defer></script>
+
+</head>
+
+<body>
+
+<header class="header-mobile">
+  <div class="header-mobile">
+  <div class="header-mobile-top">
+
+    <!-- MENU BURGER — GAUCHE -->
+    <button class="menu-toggle" aria-label="Ouvrir le menu">
+      Menu
+    </button>
+
+    <!-- LOGO — CENTRE -->
+    <div class="header-mobile-logo">
+      <a href="index.html">
+        <img src="assets/images/logo.png" alt="Simone Sixx">
+      </a>
+    </div>
+
+    <!-- PANIER — DROITE -->
+    <div class="header-mobile-actions">
+      <a href="panier.html">
+        Panier (<span id="cartCount">0</span>)
+    </div>
+
+  </div>
+
+  <!-- MENU DÉROULANT -->
+  <nav class="menu-mobile">
+    <a href="confections.html">Confections</a>
+    <a href="parfums.html">Parfums</a>
+    <a href="collection.html">Collections</a>
+    <a href="events.html">Évènements</a>
+
+    <div class="menu-secondary">
+      <a href="#journal">Journal</a>
+    </div>
+  </nav>
+</div>
+
+</header>
+
+<header>
+  <nav class="nav">
+    <div class="nav-left">
+      <a href="confections.html">Confections</a>
+      <a href="parfums.html" class="active">Parfums</a>
+      <a href="collection.html">Collections</a>
+      <a href="events.html">Évènements</a>
+    </div>
+
+    <div class="nav-logo">
+      <a href="index.html">
+        <img src="assets/images/logo.png" class="logo-header" alt="Simone Sixx">
+      </a>
+    </div>
+
+    <div class="nav-right">
+      <a href="#newsletter" class="nav-newsletter">Journal</a>
+      <span class="nav-separator"></span>
+      <a href="panier.html">
+        Panier (<span id="cartCount">0</span>)
+      </a>
+    </div>
+
+
+  </nav>
+</header>
+
+<main class="product-page parfum">
+
+  <!-- Image -->
+  <div class="image">
+    <img src="assets/images/3eme.jpg" alt="La Chambre du Sixième Étage">
+  </div>
+
+  <!-- Infos -->
+  <div class="info">
+    <h1>La Chambre du Sixième Étage</h1>
+    <p class="parfum-type">Eau de parfum</p>
+    <p class="price" id="parfumPrice">54,00 EUR</p>
+
+    <p class="description">
+      Une eau de parfum intime, caractérielle et feutrée.<br><br>
+      Une lavande sèche suspendue dans l’air, bois chauffés par la nuit.
+      Vanille ambrée et labdanum cuiré, cèdre brut et amyris doux,
+      un musc discret qui reste contre la peau.
+    </p>
+
+    <p class="no-return">
+      Échantillon offert. <br><br> En raison de la nature du parfum, ce produit ne peut être ni repris ni échangé une fois ouvert.
+    </p>
+
+    <!-- Formats -->
+    <div class="sizes parfum-sizes">
+      <p>Format</p>
+
+  <div class="size selected"
+       data-format="30 ml"
+       data-price="54"
+       data-stock="6"
+       onclick="selectFormat(this)">
+    30 ml
+  </div>
+
+  <div class="size"
+       data-format="50 ml"
+       data-price="90"
+       data-stock="0"
+       onclick="selectFormat(this)">
+    50 ml
+  </div>
+</div>
+
+
+    <button class="add-to-cart" onclick="addPerfumeToCart()">
+      Ajouter au panier
+    </button>
+
+    <div class="accordion">
+
+  <div class="accordion-item">
+
+    <button class="accordion-toggle" onclick="toggleAccordion(this)">
+      Détails
+    </button>
+
+    <div class="accordion-content">
+      <p class="composition-text">
+        ALCOHOL DENAT · PARFUM · AQUA · LIMONENE · GERANIOL · COUMARIN ·  
+        LAVANDIN SUPER · RÉSINOÏDE DE LABDANUM 10 % ·  
+        FLEURESSENCE DE BOIS DE CÈDRE · AMYRIS ESSENTIAL OIL ·  
+        VANILLE ABSOLUE 5 % · MUSC BRASSYLATE D’ÉTHYLÈNE
+      </p>
+    </div>
+</div>
+    
+
+<div class="accordion-item">
+    <button class="accordion-toggle" onclick="toggleAccordion(this)">
+      Confection
+    </button>
+
+    <div class="accordion-content">
+      <p class="confectionnee-text">
+        Une eau de parfum confectionnée en France
+      </p>
+    </div>
+
+  </div>
+
+</div>
+
+
+</div>
+
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+
+    <div class="footer-left">
+      <p>© 2026 Simone Sixx</p>
+    </div>
+
+    <div class="footer-links">
+      <a href="retours.html">Demande de retour</a>
+      <a href="legal.html">Pages légales</a>
+      <a href="contact.html">Contact</a>
+    </div>
+
+  </div>
+</footer>
+
+<div class="newsletter-popup" id="newsletterPopup">
+  <div class="newsletter-box">
+
+    <button class="newsletter-close" onclick="closeNewsletter()">×</button>
+
+    <h2>Journal Simone Sixx</h2>
+
+    <p>
+      Être informé des prochaines pièces,  
+      des évènements et publications.
+    </p>
+
+<form id="newsletterForm">
+  <input
+    type="email"
+    placeholder="Adresse e-mail"
+    required
+  >
+  <button type="submit">S’inscrire</button>
+</form>
+
+<p class="newsletter-success" hidden>
+  Vous êtes inscrit au journal.
+</p>
+
+<p class="newsletter-exists" hidden>
+  Cette adresse est déjà inscrite.
+</p>
+
+
+
+  </div>
+</div>
+
+
+</body>
+</html>
