@@ -557,9 +557,9 @@ body.home .site-footer {
   .product-page:not(.parfum) .sizes::before {
     content: "";
     display: block;
-    width: 200px;
+    width: 240px;
     height: 1px;
-    background: rgba(0, 0, 0, 0.15);
+    background: rgba(0, 0, 0, 0.10);
     margin: 0 0 26px auto;
   }
 
