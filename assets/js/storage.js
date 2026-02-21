@@ -1,5 +1,6 @@
 (function () {
   const PRODUCTS_KEY = "products";
+  const ARTICLES_KEY = "articles";
 
   function getSafeStorage() {
     try {
@@ -30,9 +31,23 @@
     }
   }
 
+  function loadArticles() {
+    if (!storage) return [];
+    try {
+      return JSON.parse(storage.getItem(ARTICLES_KEY)) || [];
+    } catch {
+      return [];
+    }
+  }
+
   function saveProducts(products) {
     if (!storage) return;
     storage.setItem(PRODUCTS_KEY, JSON.stringify(products || []));
+  }
+
+  function saveArticles(articles) {
+    if (!storage) return;
+    storage.setItem(ARTICLES_KEY, JSON.stringify(articles || []));
   }
 
   function seedFromGlobalProducts() {
@@ -44,10 +59,34 @@
     }
   }
 
+  function seedFromArray(key, items) {
+    if (!storage) return;
+    const existing = key === ARTICLES_KEY ? loadArticles() : loadProducts();
+    if (existing.length > 0) return;
+    if (Array.isArray(items) && items.length > 0) {
+      storage.setItem(key, JSON.stringify(items));
+    }
+  }
+
   window.ProductStore = {
     seedFromGlobalProducts,
     loadProducts,
     saveProducts,
+    get storageAvailable() {
+      return !!storage;
+    },
+    get storageType() {
+      if (!storage) return "none";
+      return storage === window.localStorage ? "localStorage" : "sessionStorage";
+    }
+  };
+
+  window.ArticleStore = {
+    loadArticles,
+    saveArticles,
+    seedFromArray(articles) {
+      seedFromArray(ARTICLES_KEY, articles);
+    },
     get storageAvailable() {
       return !!storage;
     },

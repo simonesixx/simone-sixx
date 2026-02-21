@@ -12,6 +12,8 @@
 
 
   <link rel="stylesheet" href="assets/css/style.css">
+  <script src="assets/js/storage.js" defer></script>
+  <script src="assets/js/published-articles.js" defer></script>
   <script src="assets/js/articles.js" defer></script>
   <script src="assets/js/shop.js" defer></script>
   <script src="assets/js/newsletter.js" defer></script>
@@ -142,41 +144,6 @@
 
   </div>
 </div>
-
-<script>
-  // Charger et afficher les articles
-  document.addEventListener('DOMContentLoaded', function() {
-    const articlesList = document.getElementById('articlesList');
-    
-    articles.forEach((article, index) => {
-      // Créer l'élément article
-      const eventEntry = document.createElement('div');
-      eventEntry.className = 'event-entry';
-      
-      eventEntry.innerHTML = `
-        <p class="event-date">${article.date}</p>
-        <h2>${article.title}</h2>
-        <p class="event-text">
-          ${article.excerpt}
-        </p>
-        <a class="event-link" href="articles/article.html?id=${article.id}">
-          Voir le sujet
-        </a>
-      `;
-      
-      articlesList.appendChild(eventEntry);
-      
-      // Ajouter un séparateur entre les articles (sauf après le dernier)
-      if (index < articles.length - 1) {
-        const divider = document.createElement('div');
-        divider.className = 'event-divider';
-        articlesList.appendChild(divider);
-      }
-    });
-    
-    updateCartCount();
-  });
-</script>
 
 </body>
 </html>

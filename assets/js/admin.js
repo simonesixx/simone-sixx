@@ -502,4 +502,278 @@ document.addEventListener("DOMContentLoaded", () => {
 
   resetDynamicSections();
   renderList();
+
+  // =========================
+  // ARTICLES (ÉVÈNEMENTS)
+  // =========================
+
+  const articleForm = document.getElementById("articleForm");
+  const articlesAdminList = document.getElementById("articlesAdminList");
+  const exportArticlesBtn = document.getElementById("exportArticlesBtn");
+  const importArticlesFile = document.getElementById("importArticlesFile");
+  const articleSubmitBtn = document.getElementById("articleSubmitBtn");
+  const articleCancelBtn = document.getElementById("articleCancelBtn");
+  const articleFormSection = document.getElementById("articleFormSection");
+
+  let editingArticleIndex = null;
+
+  function loadArticles() {
+    return window.ArticleStore?.loadArticles?.() || [];
+  }
+
+  function saveArticles(list) {
+    window.ArticleStore?.saveArticles?.(list);
+    renderArticlesList();
+  }
+
+  function exportArticlesJson() {
+    const list = loadArticles();
+    const json = JSON.stringify(list || [], null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "articles.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+  }
+
+  async function importArticlesJson(file) {
+    if (!file) return;
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    if (!Array.isArray(parsed)) {
+      alert("Fichier invalide : le JSON doit être un tableau d’articles.");
+      return;
+    }
+    saveArticles(parsed);
+    alert("Articles importés dans le navigateur ! Pense à exporter puis commit/push assets/data/articles.json pour les publier.");
+  }
+
+  async function seedArticlesFromPublishedIfEmpty() {
+    try {
+      const existing = loadArticles();
+      if (existing.length > 0) return;
+      const published = await window.loadPublishedArticles?.();
+      if (Array.isArray(published) && published.length > 0) {
+        saveArticles(published);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  function startEditArticle(index) {
+    const list = loadArticles();
+    const a = list[index];
+    if (!a) return;
+
+    editingArticleIndex = index;
+
+    document.getElementById("articleId").value = a.id || "";
+    document.getElementById("articleTitle").value = a.title || "";
+    document.getElementById("articleDate").value = a.date || "";
+    document.getElementById("articleImage").value = a.image || "";
+    document.getElementById("articleExcerpt").value = a.excerpt || "";
+    document.getElementById("articleContent").value = a.content || "";
+
+    const safeImages = Array.isArray(a.images) ? a.images.filter(Boolean) : [];
+    document.getElementById("articleImages").value = safeImages.join("\n");
+
+    if (articleFormSection) articleFormSection.classList.add("editing");
+    if (articleSubmitBtn) articleSubmitBtn.textContent = "Mettre à jour l’article";
+    if (articleCancelBtn) articleCancelBtn.classList.add("visible");
+    articleFormSection?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function cancelEditArticle() {
+    editingArticleIndex = null;
+    try {
+      articleForm?.reset();
+    } catch {
+      // ignore
+    }
+
+    if (articleFormSection) articleFormSection.classList.remove("editing");
+    if (articleSubmitBtn) articleSubmitBtn.textContent = "Ajouter l’article";
+    if (articleCancelBtn) articleCancelBtn.classList.remove("visible");
+  }
+
+  function renderArticlesList() {
+    if (!articlesAdminList) return;
+    const list = loadArticles();
+
+    if (list.length === 0) {
+      articlesAdminList.innerHTML = '<p style="color:#999;">Aucun article</p>';
+      return;
+    }
+
+    articlesAdminList.innerHTML = list
+      .map(
+        (a, idx) => `
+          <div class="product-item">
+            <div class="product-info">
+              <h3>${a.title || "(Sans titre)"}</h3>
+              <p>${a.date || ""} • ID: ${a.id || ""}</p>
+            </div>
+            <div class="product-actions">
+              <a class="edit-btn" href="articles/article.html?id=${encodeURIComponent(a.id || "")}&preview=1" target="_blank" rel="noopener noreferrer" title="Voir l’article (preview)" aria-label="Voir l’article (preview)" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
+                👁️
+              </a>
+              <button class="move-btn" data-article-move-up="${idx}" ${idx === 0 ? "disabled" : ""} title="Monter">↑</button>
+              <button class="move-btn" data-article-move-down="${idx}" ${idx === list.length - 1 ? "disabled" : ""} title="Descendre">↓</button>
+              <button class="edit-btn" data-article-edit="${idx}">Modifier</button>
+              <button class="delete-btn" data-article-delete="${idx}">Supprimer</button>
+            </div>
+          </div>
+        `
+      )
+      .join("");
+
+    function moveArticle(fromIndex, toIndex) {
+      const arr = loadArticles();
+      if (fromIndex < 0 || fromIndex >= arr.length) return;
+      if (toIndex < 0 || toIndex >= arr.length) return;
+      if (fromIndex === toIndex) return;
+
+      const [item] = arr.splice(fromIndex, 1);
+      arr.splice(toIndex, 0, item);
+
+      if (editingArticleIndex === fromIndex) {
+        editingArticleIndex = toIndex;
+      } else if (editingArticleIndex !== null) {
+        if (fromIndex < editingArticleIndex && toIndex >= editingArticleIndex) editingArticleIndex -= 1;
+        if (fromIndex > editingArticleIndex && toIndex <= editingArticleIndex) editingArticleIndex += 1;
+      }
+
+      saveArticles(arr);
+    }
+
+    articlesAdminList.querySelectorAll("[data-article-delete]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const index = Number(btn.getAttribute("data-article-delete"));
+        if (!Number.isFinite(index)) return;
+        if (!confirm("Êtes-vous sûr ?")) return;
+
+        const arr = loadArticles();
+        arr.splice(index, 1);
+        saveArticles(arr);
+
+        if (editingArticleIndex === index) {
+          cancelEditArticle();
+        }
+      });
+    });
+
+    articlesAdminList.querySelectorAll("[data-article-edit]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const index = Number(btn.getAttribute("data-article-edit"));
+        startEditArticle(index);
+      });
+    });
+
+    articlesAdminList.querySelectorAll("[data-article-move-up]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const index = Number(btn.getAttribute("data-article-move-up"));
+        if (!Number.isFinite(index)) return;
+        moveArticle(index, index - 1);
+      });
+    });
+
+    articlesAdminList.querySelectorAll("[data-article-move-down]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const index = Number(btn.getAttribute("data-article-move-down"));
+        if (!Number.isFinite(index)) return;
+        moveArticle(index, index + 1);
+      });
+    });
+  }
+
+  exportArticlesBtn?.addEventListener("click", exportArticlesJson);
+  importArticlesFile?.addEventListener("change", async (e) => {
+    const file = e.target?.files?.[0];
+    try {
+      await importArticlesJson(file);
+    } catch {
+      alert("Impossible d’importer ce fichier.");
+    } finally {
+      try {
+        e.target.value = "";
+      } catch {
+        /* ignore */
+      }
+    }
+  });
+
+  articleCancelBtn?.addEventListener("click", cancelEditArticle);
+
+  articleForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById("articleId").value.trim();
+    const title = document.getElementById("articleTitle").value.trim();
+    const date = document.getElementById("articleDate").value.trim();
+    const image = document.getElementById("articleImage").value.trim();
+    const excerpt = document.getElementById("articleExcerpt").value.trim();
+    const content = document.getElementById("articleContent").value;
+
+    const rawImages = document.getElementById("articleImages").value || "";
+    const images = rawImages
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const finalImages = Array.from(new Set([image, ...images].filter(Boolean)));
+
+    if (!id || !title || !date) {
+      alert("Merci de remplir au minimum : ID, Titre, Date.");
+      return;
+    }
+
+    if (!image && finalImages.length === 0) {
+      const proceed = confirm("Aucune image renseignée. Continuer quand même ?");
+      if (!proceed) return;
+    }
+
+    const article = {
+      id,
+      title,
+      date,
+      image: image || (finalImages[0] || ""),
+      images: finalImages,
+      excerpt,
+      content
+    };
+
+    const list = loadArticles();
+
+    const duplicateIndex = list.findIndex((a) => a.id === id);
+    if (duplicateIndex !== -1 && duplicateIndex !== editingArticleIndex) {
+      alert("Cet ID existe déjà. Choisis un autre ID.");
+      return;
+    }
+
+    if (editingArticleIndex !== null) {
+      list[editingArticleIndex] = article;
+      saveArticles(list);
+      alert("Article mis à jour !");
+      cancelEditArticle();
+      return;
+    }
+
+    list.push(article);
+    saveArticles(list);
+    alert("Article ajouté !");
+    articleForm.reset();
+  });
+
+  if (window.ArticleStore?.storageAvailable) {
+    seedArticlesFromPublishedIfEmpty();
+  }
+
+  renderArticlesList();
 });
