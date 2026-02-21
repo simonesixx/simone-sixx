@@ -550,10 +550,17 @@ body.home .site-footer {
 
   .product-page:not(.parfum) .sizes {
     max-width: 340px;
-    border-top: 1px solid rgba(0, 0, 0, 0.15);
-    padding-top: 26px;
     margin-top: 0;
     margin-bottom: 50px;
+  }
+
+  .product-page:not(.parfum) .sizes::before {
+    content: "";
+    display: block;
+    width: 200px;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.15);
+    margin: 0 0 26px auto;
   }
 
   .product-page:not(.parfum) .sizes p {
