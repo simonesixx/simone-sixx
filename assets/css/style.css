@@ -105,7 +105,7 @@ body.home .hero img {
 }
 
 body.home .site-footer {
-  margin-top: 50px;
+  margin-top: 40px;
 }
 
 @media (max-width: 768px) {
@@ -120,7 +120,7 @@ body.home .site-footer {
   }
 
   body.home .site-footer {
-    margin-top: 56px;
+    margin-top: 46px;
   }
 }
 
