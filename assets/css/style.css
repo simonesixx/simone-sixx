@@ -104,6 +104,10 @@ body.home .hero img {
   display: block;
 }
 
+body.home .site-footer {
+  margin-top: 50px;
+}
+
 @media (max-width: 768px) {
   body.home .hero {
     padding: 16px;
@@ -113,6 +117,10 @@ body.home .hero img {
 
   body.home .hero img {
     height: 78vh;
+  }
+
+  body.home .site-footer {
+    margin-top: 56px;
   }
 }
 
