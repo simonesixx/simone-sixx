@@ -92,7 +92,7 @@ body.home .hero {
   padding: 40px;
   width: 100%;
   margin-left: 0;
-  margin-top: 20px;
+  margin-top: 25px;
   margin-bottom: 140px;
   box-sizing: border-box;
 }
@@ -107,7 +107,7 @@ body.home .hero img {
 @media (max-width: 768px) {
   body.home .hero {
     padding: 16px;
-    margin-top: 8px;
+    margin-top: 10px;
     margin-bottom: 96px;
   }
 
