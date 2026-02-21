@@ -1,4 +1,50 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // =========================
+  // NAVIGATION PAR ONGLETS
+  // =========================
+  (function setupAdminTabs() {
+    const tabButtons = Array.from(document.querySelectorAll(".admin-tabs [data-tab]"));
+    const sections = Array.from(document.querySelectorAll("[data-section]"));
+    if (tabButtons.length === 0 || sections.length === 0) return;
+
+    function setActive(tab) {
+      sections.forEach((section) => {
+        const match = section.getAttribute("data-section") === tab;
+        section.hidden = !match;
+      });
+
+      tabButtons.forEach((btn) => {
+        const isActive = btn.getAttribute("data-tab") === tab;
+        btn.classList.toggle("active", isActive);
+        btn.setAttribute("aria-selected", String(isActive));
+      });
+
+      try {
+        window.location.hash = tab;
+      } catch {
+        // ignore
+      }
+    }
+
+    function getInitialTab() {
+      const hash = (window.location.hash || "").replace("#", "");
+      if (hash === "articles" || hash === "products") return hash;
+      return "products";
+    }
+
+    tabButtons.forEach((btn) => {
+      btn.type = "button";
+      btn.classList.add("tab-btn");
+      btn.addEventListener("click", () => {
+        const tab = btn.getAttribute("data-tab") || "products";
+        setActive(tab);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+
+    setActive(getInitialTab());
+  })();
+
   window.ProductStore?.seedFromGlobalProducts();
 
   const form = document.getElementById("productForm");
