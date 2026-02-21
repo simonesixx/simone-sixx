@@ -86,6 +86,27 @@ header {
   object-fit: cover;
 }
 
+/* Home page hero: full width with white frame */
+body.home .hero {
+  display: block;
+  padding: 40px;
+  width: 100%;
+  margin-left: 0;
+  box-sizing: border-box;
+}
+
+body.home .hero img {
+  width: 100%;
+  max-width: none;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  body.home .hero {
+    padding: 16px;
+  }
+}
+
 .home-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
