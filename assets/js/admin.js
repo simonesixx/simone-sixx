@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function getInitialTab() {
       const hash = (window.location.hash || "").replace("#", "");
-      if (hash === "articles" || hash === "products") return hash;
+      if (hash === "articles" || hash === "products" || hash === "lookbooks") return hash;
       return "products";
     }
 
@@ -822,4 +822,264 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   renderArticlesList();
+
+  // =========================
+  // LOOKBOOKS (COLLECTIONS)
+  // =========================
+
+  const lookbookForm = document.getElementById("lookbookForm");
+  const lookbooksAdminList = document.getElementById("lookbooksAdminList");
+  const exportLookbooksBtn = document.getElementById("exportLookbooksBtn");
+  const importLookbooksFile = document.getElementById("importLookbooksFile");
+  const lookbookSubmitBtn = document.getElementById("lookbookSubmitBtn");
+  const lookbookCancelBtn = document.getElementById("lookbookCancelBtn");
+  const lookbookFormSection = document.getElementById("lookbookFormSection");
+
+  let editingLookbookIndex = null;
+
+  function loadLookbooks() {
+    return window.LookbookStore?.loadLookbooks?.() || [];
+  }
+
+  function saveLookbooks(list) {
+    window.LookbookStore?.saveLookbooks?.(list);
+    renderLookbooksList();
+  }
+
+  function exportLookbooksJson() {
+    const list = loadLookbooks();
+    const json = JSON.stringify(list || [], null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "lookbooks.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+  }
+
+  async function importLookbooksJson(file) {
+    if (!file) return;
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    if (!Array.isArray(parsed)) {
+      alert("Fichier invalide : le JSON doit être un tableau de lookbooks.");
+      return;
+    }
+    saveLookbooks(parsed);
+    alert("Lookbooks importés dans le navigateur ! Pense à exporter puis commit/push assets/data/lookbooks.json pour les publier.");
+  }
+
+  async function seedLookbooksFromPublishedIfEmpty() {
+    try {
+      const existing = loadLookbooks();
+      if (existing.length > 0) return;
+      const published = await window.loadPublishedLookbooks?.();
+      if (Array.isArray(published) && published.length > 0) {
+        saveLookbooks(published);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  function startEditLookbook(index) {
+    const list = loadLookbooks();
+    const lb = list[index];
+    if (!lb) return;
+
+    editingLookbookIndex = index;
+
+    document.getElementById("lookbookId").value = lb.id || "";
+    document.getElementById("lookbookSeason").value = lb.season || "";
+    document.getElementById("lookbookTitle").value = lb.title || "";
+
+    const imgs = Array.isArray(lb.images) ? lb.images.filter(Boolean) : [];
+    document.getElementById("lookbookImages").value = imgs.join("\n");
+
+    if (lookbookFormSection) lookbookFormSection.classList.add("editing");
+    if (lookbookSubmitBtn) lookbookSubmitBtn.textContent = "Mettre à jour le lookbook";
+    if (lookbookCancelBtn) lookbookCancelBtn.classList.add("visible");
+    lookbookFormSection?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function cancelEditLookbook() {
+    editingLookbookIndex = null;
+    try {
+      lookbookForm?.reset();
+    } catch {
+      // ignore
+    }
+
+    if (lookbookFormSection) lookbookFormSection.classList.remove("editing");
+    if (lookbookSubmitBtn) lookbookSubmitBtn.textContent = "Ajouter le lookbook";
+    if (lookbookCancelBtn) lookbookCancelBtn.classList.remove("visible");
+  }
+
+  function renderLookbooksList() {
+    if (!lookbooksAdminList) return;
+    const list = loadLookbooks();
+
+    if (list.length === 0) {
+      lookbooksAdminList.innerHTML = '<p style="color:#999;">Aucun lookbook</p>';
+      return;
+    }
+
+    lookbooksAdminList.innerHTML = list
+      .map(
+        (lb, idx) => `
+          <div class="product-item">
+            <div class="product-info">
+              <h3>${lb.title || "(Sans titre)"}</h3>
+              <p>${lb.season || ""} • ID: ${lb.id || ""}</p>
+            </div>
+            <div class="product-actions">
+              <a class="edit-btn" href="collection.html?preview=1" target="_blank" rel="noopener noreferrer" title="Voir Collections (preview)" aria-label="Voir Collections (preview)" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
+                📚
+              </a>
+              <a class="edit-btn" href="lookbook-ss25.html?id=${encodeURIComponent(lb.id || "")}&preview=1" target="_blank" rel="noopener noreferrer" title="Voir le lookbook (preview)" aria-label="Voir le lookbook (preview)" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
+                👁️
+              </a>
+              <button class="move-btn" data-lookbook-move-up="${idx}" ${idx === 0 ? "disabled" : ""} title="Monter">↑</button>
+              <button class="move-btn" data-lookbook-move-down="${idx}" ${idx === list.length - 1 ? "disabled" : ""} title="Descendre">↓</button>
+              <button class="edit-btn" data-lookbook-edit="${idx}">Modifier</button>
+              <button class="delete-btn" data-lookbook-delete="${idx}">Supprimer</button>
+            </div>
+          </div>
+        `
+      )
+      .join("");
+
+    function moveLookbook(fromIndex, toIndex) {
+      const arr = loadLookbooks();
+      if (fromIndex < 0 || fromIndex >= arr.length) return;
+      if (toIndex < 0 || toIndex >= arr.length) return;
+      if (fromIndex === toIndex) return;
+
+      const [item] = arr.splice(fromIndex, 1);
+      arr.splice(toIndex, 0, item);
+
+      if (editingLookbookIndex === fromIndex) {
+        editingLookbookIndex = toIndex;
+      } else if (editingLookbookIndex !== null) {
+        if (fromIndex < editingLookbookIndex && toIndex >= editingLookbookIndex) editingLookbookIndex -= 1;
+        if (fromIndex > editingLookbookIndex && toIndex <= editingLookbookIndex) editingLookbookIndex += 1;
+      }
+
+      saveLookbooks(arr);
+    }
+
+    lookbooksAdminList.querySelectorAll("[data-lookbook-delete]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const index = Number(btn.getAttribute("data-lookbook-delete"));
+        if (!Number.isFinite(index)) return;
+        if (!confirm("Êtes-vous sûr ?")) return;
+
+        const arr = loadLookbooks();
+        arr.splice(index, 1);
+        saveLookbooks(arr);
+
+        if (editingLookbookIndex === index) {
+          cancelEditLookbook();
+        }
+      });
+    });
+
+    lookbooksAdminList.querySelectorAll("[data-lookbook-edit]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const index = Number(btn.getAttribute("data-lookbook-edit"));
+        startEditLookbook(index);
+      });
+    });
+
+    lookbooksAdminList.querySelectorAll("[data-lookbook-move-up]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const index = Number(btn.getAttribute("data-lookbook-move-up"));
+        if (!Number.isFinite(index)) return;
+        moveLookbook(index, index - 1);
+      });
+    });
+
+    lookbooksAdminList.querySelectorAll("[data-lookbook-move-down]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const index = Number(btn.getAttribute("data-lookbook-move-down"));
+        if (!Number.isFinite(index)) return;
+        moveLookbook(index, index + 1);
+      });
+    });
+  }
+
+  exportLookbooksBtn?.addEventListener("click", exportLookbooksJson);
+  importLookbooksFile?.addEventListener("change", async (e) => {
+    const file = e.target?.files?.[0];
+    try {
+      await importLookbooksJson(file);
+    } catch {
+      alert("Impossible d’importer ce fichier.");
+    } finally {
+      try {
+        e.target.value = "";
+      } catch {
+        /* ignore */
+      }
+    }
+  });
+
+  lookbookCancelBtn?.addEventListener("click", cancelEditLookbook);
+
+  lookbookForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById("lookbookId").value.trim();
+    const season = document.getElementById("lookbookSeason").value.trim();
+    const title = document.getElementById("lookbookTitle").value.trim();
+
+    const rawImages = document.getElementById("lookbookImages").value || "";
+    const images = rawImages
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (!id || !season || !title) {
+      alert("Merci de remplir au minimum : ID, Saison, Titre.");
+      return;
+    }
+
+    const lookbook = {
+      id,
+      season,
+      title,
+      images: Array.from(new Set(images))
+    };
+
+    const list = loadLookbooks();
+    const duplicateIndex = list.findIndex((lb) => lb.id === id);
+    if (duplicateIndex !== -1 && duplicateIndex !== editingLookbookIndex) {
+      alert("Cet ID existe déjà. Choisis un autre ID.");
+      return;
+    }
+
+    if (editingLookbookIndex !== null) {
+      list[editingLookbookIndex] = lookbook;
+      saveLookbooks(list);
+      alert("Lookbook mis à jour !");
+      cancelEditLookbook();
+      return;
+    }
+
+    list.push(lookbook);
+    saveLookbooks(list);
+    alert("Lookbook ajouté !");
+    lookbookForm.reset();
+  });
+
+  if (window.LookbookStore?.storageAvailable) {
+    seedLookbooksFromPublishedIfEmpty();
+  }
+
+  renderLookbooksList();
 });

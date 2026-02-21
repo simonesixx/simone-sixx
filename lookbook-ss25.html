@@ -15,6 +15,8 @@
   <link rel="stylesheet" href="assets/css/style.css">
 
   <!-- JS -->
+  <script src="assets/js/storage.js" defer></script>
+  <script src="assets/js/published-lookbooks.js" defer></script>
   <script src="assets/js/lookbooks.js" defer></script>
   <script src="assets/js/shop.js" defer></script>
   <script src="assets/js/newsletter.js" defer></script>
@@ -162,43 +164,6 @@
 
   </div>
 </div>
-
-<script>
-  // Charger le lookbook au chargement de la page
-  document.addEventListener('DOMContentLoaded', function() {
-    const lookbookId = getLookbookIdFromURL();
-    const lookbook = getLookbookById(lookbookId);
-
-    if (lookbook) {
-      // Remplir les infos du lookbook
-      document.querySelector('title').textContent = lookbook.season + ' ' + lookbook.title + ' — Simone Sixx';
-      document.getElementById('lookbookSeason').textContent = lookbook.season;
-      document.getElementById('lookbookTitle').textContent = lookbook.title;
-
-      // Générer les images dynamiquement
-      const lookbookGrid = document.getElementById('lookbookGrid');
-      lookbookGrid.innerHTML = '';
-
-      lookbook.images.forEach(image => {
-        const img = document.createElement('img');
-        img.src = 'assets/images/' + image;
-        img.className = 'look';
-        img.alt = lookbook.title;
-        img.onclick = function() { openLightbox(this); };
-        lookbookGrid.appendChild(img);
-      });
-
-      // Réinitialiser les looks globaux pour la lightbox
-      looks = document.querySelectorAll('.lookbook-grid .look');
-
-      updateCartCount();
-    } else {
-      alert('Lookbook non trouvé');
-    }
-  });
-
-
-</script>
 
 </body>
 </html>

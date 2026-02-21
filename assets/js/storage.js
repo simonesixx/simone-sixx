@@ -1,6 +1,7 @@
 (function () {
   const PRODUCTS_KEY = "products";
   const ARTICLES_KEY = "articles";
+  const LOOKBOOKS_KEY = "lookbooks";
 
   function getSafeStorage() {
     try {
@@ -40,6 +41,15 @@
     }
   }
 
+  function loadLookbooks() {
+    if (!storage) return [];
+    try {
+      return JSON.parse(storage.getItem(LOOKBOOKS_KEY)) || [];
+    } catch {
+      return [];
+    }
+  }
+
   function saveProducts(products) {
     if (!storage) return;
     storage.setItem(PRODUCTS_KEY, JSON.stringify(products || []));
@@ -48,6 +58,11 @@
   function saveArticles(articles) {
     if (!storage) return;
     storage.setItem(ARTICLES_KEY, JSON.stringify(articles || []));
+  }
+
+  function saveLookbooks(lookbooks) {
+    if (!storage) return;
+    storage.setItem(LOOKBOOKS_KEY, JSON.stringify(lookbooks || []));
   }
 
   function seedFromGlobalProducts() {
@@ -61,7 +76,9 @@
 
   function seedFromArray(key, items) {
     if (!storage) return;
-    const existing = key === ARTICLES_KEY ? loadArticles() : loadProducts();
+    const existing = key === ARTICLES_KEY
+      ? loadArticles()
+      : (key === LOOKBOOKS_KEY ? loadLookbooks() : loadProducts());
     if (existing.length > 0) return;
     if (Array.isArray(items) && items.length > 0) {
       storage.setItem(key, JSON.stringify(items));
@@ -86,6 +103,21 @@
     saveArticles,
     seedFromArray(articles) {
       seedFromArray(ARTICLES_KEY, articles);
+    },
+    get storageAvailable() {
+      return !!storage;
+    },
+    get storageType() {
+      if (!storage) return "none";
+      return storage === window.localStorage ? "localStorage" : "sessionStorage";
+    }
+  };
+
+  window.LookbookStore = {
+    loadLookbooks,
+    saveLookbooks,
+    seedFromArray(lookbooks) {
+      seedFromArray(LOOKBOOKS_KEY, lookbooks);
     },
     get storageAvailable() {
       return !!storage;
