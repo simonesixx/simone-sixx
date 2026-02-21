@@ -1,5 +1,23 @@
 (function () {
-  const DEFAULT_URL = "assets/data/articles.json";
+  function resolveDefaultUrl() {
+    try {
+      const current = document.currentScript;
+      const scripts = Array.from(document.scripts || []);
+      const scriptEl = current || scripts.find((s) => String(s?.src || "").includes("/assets/js/published-articles.js"));
+      const src = String(scriptEl?.src || "");
+
+      // src ressemble à: https://example.com/.../assets/js/published-articles.js
+      const m = src.match(/^(.*)\/assets\/js\/published-articles\.js(?:\?.*)?$/);
+      if (m && m[1]) return `${m[1]}/assets/data/articles.json`;
+    } catch {
+      // ignore
+    }
+
+    // Fallback (fonctionne pour les pages à la racine)
+    return "assets/data/articles.json";
+  }
+
+  const DEFAULT_URL = resolveDefaultUrl();
 
   function withCacheBust(url) {
     const sep = url.includes("?") ? "&" : "?";
@@ -7,7 +25,7 @@
   }
 
   async function fetchPublishedArticles(url = DEFAULT_URL) {
-    const res = await fetch(withCacheBust(url), { cache: "no-store" });
+    const res = await fetch(withCacheBust(url || DEFAULT_URL), { cache: "no-store" });
     if (!res.ok) return [];
     const data = await res.json();
     return Array.isArray(data) ? data : [];
