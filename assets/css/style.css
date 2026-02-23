@@ -968,7 +968,7 @@ body.home .site-footer {
 .product-page.parfum .price .price-old {
   text-decoration: line-through;
   opacity: 0.65;
-  margin-right: 10px;
+  margin-left: 10px;
 }
 
 .product-page.parfum .price .price-new {
