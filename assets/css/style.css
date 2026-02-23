@@ -965,6 +965,16 @@ body.home .site-footer {
   font-weight: 400;
 }
 
+.product-page.parfum .price .price-old {
+  text-decoration: line-through;
+  opacity: 0.65;
+  margin-right: 10px;
+}
+
+.product-page.parfum .price .price-new {
+  white-space: nowrap;
+}
+
 /* Description plus proche du texte */
 .product-page.parfum .description {
   font-size: 13px;

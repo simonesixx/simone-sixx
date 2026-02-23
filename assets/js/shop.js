@@ -387,6 +387,31 @@ function prevLook(e) {
 let selectedParfumFormat = null;
 let selectedParfumPrice = null;
 
+function renderParfumPrice(currentPrice, originalPrice = null) {
+  const priceEl = document.getElementById("parfumPrice");
+  if (!priceEl) return;
+
+  const oldEl = document.getElementById("parfumPriceOld");
+  const newEl = document.getElementById("parfumPriceNew");
+
+  const hasOriginal = Number.isFinite(originalPrice) && Number.isFinite(currentPrice) && originalPrice > currentPrice;
+
+  if (oldEl && newEl) {
+    if (hasOriginal) {
+      oldEl.hidden = false;
+      oldEl.textContent = formatEUR(originalPrice);
+      newEl.textContent = formatEUR(currentPrice);
+    } else {
+      oldEl.hidden = true;
+      newEl.textContent = Number.isFinite(currentPrice) ? formatEUR(currentPrice) : "";
+    }
+    return;
+  }
+
+  // Fallback si la page n'a pas les spans (compat)
+  priceEl.textContent = Number.isFinite(currentPrice) ? formatEUR(currentPrice) : "";
+}
+
 function selectFormat(el) {
   if (el.classList.contains("disabled")) return;
 
@@ -396,8 +421,8 @@ function selectFormat(el) {
   selectedParfumFormat = el.dataset.format;
   selectedParfumPrice = Number(el.dataset.price);
 
-  const priceEl = document.getElementById("parfumPrice");
-  if (priceEl) priceEl.textContent = formatEUR(selectedParfumPrice);
+  const originalPrice = el.dataset.originalPrice != null ? Number(el.dataset.originalPrice) : null;
+  renderParfumPrice(selectedParfumPrice, originalPrice);
 }
 
 function addPerfumeToCart() {
@@ -467,6 +492,12 @@ document.addEventListener("DOMContentLoaded", () => {
   toggle.addEventListener("click", () => {
     menu.classList.toggle("is-open");
   });
+
+  // Parfum: initialiser le format déjà marqué "selected" (sinon "Ajouter au panier" demande de sélectionner)
+  const preselectedParfumFormat = document.querySelector(".parfum-sizes .size.selected");
+  if (preselectedParfumFormat) {
+    selectFormat(preselectedParfumFormat);
+  }
 });
 /* ===============================
    LOGIQUE FILTRES HIÉRARCHIQUES

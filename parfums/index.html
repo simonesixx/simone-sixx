@@ -100,7 +100,10 @@
   <div class="info">
     <h1>La Chambre du Sixième Étage</h1>
     <p class="parfum-type">Eau de parfum</p>
-    <p class="price" id="parfumPrice">54,00 EUR</p>
+    <p class="price" id="parfumPrice">
+      <span class="price-old" id="parfumPriceOld">54,00 EUR</span>
+      <span class="price-new" id="parfumPriceNew">42,00 EUR</span>
+    </p>
 
     <p class="description">
       Une eau de parfum intime, caractérielle et feutrée.<br><br>
@@ -119,7 +122,8 @@
 
   <div class="size selected"
        data-format="30 ml"
-       data-price="54"
+      data-price="42"
+      data-original-price="54"
        data-stock="6"
        onclick="selectFormat(this)">
     30 ml
