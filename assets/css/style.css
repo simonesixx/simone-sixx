@@ -79,6 +79,16 @@ header {
   margin-bottom: 60px;
 }
 
+.hero picture {
+  width: 85%;
+  max-width: 1300px;
+  display: block;
+}
+
+.hero picture img {
+  width: 100%;
+}
+
 .hero img {
   width: 85%;
   max-width: 1300px;
@@ -95,6 +105,11 @@ body.home .hero {
   margin-top: 25px;
   margin-bottom: 75px;
   box-sizing: border-box;
+}
+
+body.home .hero picture {
+  width: 100%;
+  max-width: none;
 }
 
 body.home .hero img {
