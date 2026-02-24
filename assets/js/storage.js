@@ -66,12 +66,10 @@
   }
 
   function seedFromGlobalProducts() {
-    const existing = loadProducts();
-    if (existing.length > 0) return;
-
-    if (Array.isArray(window.products) && window.products.length > 0) {
-      saveProducts(window.products);
-    }
+    // Les fichiers publiés (assets/data/*.json) sont la source de vérité.
+    // On n'initialise donc plus automatiquement le stockage local à partir
+    // d'une liste embarquée (products.js), pour éviter les incohérences.
+    return;
   }
 
   function seedFromArray(key, items) {

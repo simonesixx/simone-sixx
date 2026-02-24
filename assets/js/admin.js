@@ -45,8 +45,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     setActive(getInitialTab());
   })();
 
-  window.ProductStore?.seedFromGlobalProducts();
-
   async function seedProductsFromPublishedIfSuspicious() {
     try {
       if (!window.ProductStore?.storageAvailable) return;
@@ -55,10 +53,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       const stored = window.ProductStore?.loadProducts?.() || [];
       const published = await window.loadPublishedProducts();
 
-      // Si le JSON publié est accessible mais vide ([]), c'est un état valide.
+      // Si le JSON publié est accessible mais vide ([]), c'est un état valide
+      // ET doit écraser le stockage local pour éviter tout fallback fantôme.
       if (!Array.isArray(published)) return;
 
       const storedArr = Array.isArray(stored) ? stored : [];
+
+      if (published.length === 0) {
+        if (storedArr.length !== 0) {
+          window.ProductStore?.saveProducts?.([]);
+        }
+        return;
+      }
 
       const hasRobea = storedArr.some((p) => {
         const id = String(p?.id || "").toLowerCase().trim();

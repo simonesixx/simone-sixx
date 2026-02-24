@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Simone Sixx</title>
+  <link rel="icon" href="assets/images/favicon.png" type="image/png" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <style>
+    body {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 30px;
+    }
+
+    .admin-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+
+    .form-section,
+    .products-list {
+      padding: 30px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      background: white;
+    }
+
+    .form-section.editing {
+      border: 2px solid #000;
+    }
+
+    .form-section h2,
+    .products-list h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 14px;
+      box-sizing: border-box;
+      background: white;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    button {
+      background: #000;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #333;
+    }
+
+    .admin-tabs .tab-btn {
+      width: auto;
+      margin-top: 0;
+      padding: 10px 14px;
+      background: #eee;
+      color: #000;
+      border: 1px solid #ddd;
+    }
+
+    .admin-tabs .tab-btn:hover {
+      background: #e5e5e5;
+    }
+
+    .admin-tabs .tab-btn.active {
+      background: #000;
+      color: #fff;
+      border-color: #000;
+    }
+
+    .secondary-btn {
+      background: #666;
+    }
+
+    .secondary-btn:hover {
+      background: #555;
+    }
+
+    .cancel-btn {
+      background: #999;
+      display: none;
+    }
+
+    .cancel-btn.visible {
+      display: block;
+    }
+
+    .product-item {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .product-item:last-child {
+      border-bottom: none;
+    }
+
+    .product-info h3 {
+      font-size: 16px;
+      margin: 0 0 5px 0;
+    }
+
+    .product-info p {
+      font-size: 13px;
+      color: #666;
+      margin: 0;
+    }
+
+    .product-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .edit-btn {
+      background: #000;
+      padding: 8px 16px;
+      font-size: 12px;
+      width: auto;
+      margin: 0;
+    }
+
+    .delete-btn {
+      background: #d32f2f;
+      padding: 8px 16px;
+      font-size: 12px;
+      width: auto;
+      margin: 0;
+    }
+
+    .move-btn {
+      background: #666;
+      padding: 8px 12px;
+      font-size: 12px;
+      width: auto;
+      margin: 0;
+    }
+
+    .move-btn:hover {
+      background: #555;
+    }
+
+    .delete-btn:hover {
+      background: #b71c1c;
+    }
+
+    .note {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
+    .warning {
+      display: none;
+      padding: 12px 14px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .admin-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <script src="assets/js/storage.js" defer></script>
+  <script src="assets/js/published-products.js" defer></script>
+  <script src="assets/js/published-articles.js" defer></script>
+  <script src="assets/js/published-lookbooks.js" defer></script>
+  <script src="assets/js/admin.js" defer></script>
+</head>
+<body>
+  <h1>Admin — Simone Sixx</h1>
+
+  <div class="admin-tabs" role="tablist" aria-label="Sections admin" style="display:flex; gap:10px; margin: 0 0 26px; flex-wrap:wrap;">
+    <button type="button" class="tab-btn" data-tab="products" aria-controls="productsSection">Produits</button>
+    <button type="button" class="tab-btn" data-tab="articles" aria-controls="articlesSection">Articles</button>
+    <button type="button" class="tab-btn" data-tab="lookbooks" aria-controls="lookbooksSection">Lookbooks</button>
+  </div>
+
+  <div class="warning" id="storageWarning">
+    Ton navigateur bloque le stockage (localStorage/sessionStorage). Pour que l’admin soit relié aux autres pages, ouvre le site via un serveur local (ex: Live Server ou un serveur http).
+  </div>
+
+  <section id="productsSection" data-section="products">
+  <h2 style="font-size:20px; margin: 0 0 14px;">Produits</h2>
+
+  <p class="note">
+    Les produits ajoutés ici sont sauvegardés dans le navigateur (localStorage). Pour les publier sur GitHub Pages, exporte le JSON puis remplace le fichier <strong>assets/data/products.json</strong> dans ton projet et fais un commit/push.
+  </p>
+
+  <div style="display:flex; gap:12px; flex-wrap:wrap; margin: 12px 0 28px;">
+    <button type="button" class="secondary-btn" id="exportProductsBtn" style="width:auto;">Exporter les produits (JSON)</button>
+    <label style="display:flex; gap:10px; align-items:center; text-transform:none; letter-spacing:0; font-weight:500; margin:0;">
+      <span style="font-size:13px;">Importer (JSON)</span>
+      <input type="file" id="importProductsFile" accept="application/json" />
+    </label>
+  </div>
+
+  <div class="admin-container">
+    <div class="form-section">
+      <h2>Ajouter un produit</h2>
+
+      <form id="productForm">
+        <div class="form-group">
+          <label>ID du produit</label>
+          <input type="text" id="productId" placeholder="ex: perfecto-en-cuir-noir" required />
+        </div>
+
+        <div class="form-group">
+          <label>Nom</label>
+          <input type="text" id="productName" placeholder="ex: Perfecto en cuir noir" required />
+        </div>
+
+        <div class="form-group">
+          <label>Prix (EUR)</label>
+          <input type="number" id="productPrice" placeholder="310" step="0.01" required />
+        </div>
+
+        <div class="form-group">
+          <label>Image principale (URL)</label>
+          <input type="text" id="productImage" placeholder="assets/images/look1.jpg" />
+        </div>
+
+        <div class="form-group">
+          <label>Image principale (fichier)</label>
+          <input type="file" id="productImageFile" accept="image/*" />
+          <p class="note" style="margin:8px 0 0;">
+            Astuce : tu peux sélectionner une image depuis ton dossier. L’image sera enregistrée dans le stockage du navigateur.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label>Images (URLs — 1 par ligne)</label>
+          <textarea id="productImages" placeholder="assets/images/look1.jpg&#10;assets/images/look2.jpg"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Images (fichiers — multiple)</label>
+          <input type="file" id="productImagesFiles" accept="image/*" multiple />
+          <p class="note" style="margin:8px 0 0;">
+            Attention : si tu choisis beaucoup d’images lourdes, le navigateur peut refuser (limite de stockage).
+          </p>
+        </div>
+
+        <div class="form-group">
+          <button class="secondary-btn" type="button" id="clearImagesBtn">Réinitialiser les images</button>
+          <p class="note" style="margin:8px 0 0;">
+            Vide les champs images (URL + fichiers). Pense à enregistrer pour appliquer sur le produit.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="productDescription" placeholder="Description du produit..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Collection</label>
+          <select id="productCollection">
+            <option value="">Aucune</option>
+            <option value="ss26">Printemps & Été 2026</option>
+            <option value="aw26">Automne & Hiver 2026</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Catégorie principale</label>
+          <select id="productLevel1" required>
+            <option value="">Sélectionner...</option>
+            <option value="vestiaire">Vestiaire</option>
+            <option value="accessoires">Accessoires</option>
+            <option value="chaussures">Chaussures</option>
+            <option value="bijoux">Bijoux</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Genre</label>
+          <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center; padding:6px 0;">
+            <label style="display:flex; gap:8px; align-items:center; text-transform:none; letter-spacing:0; font-weight:500; margin:0;">
+              <input type="checkbox" id="productLevel2Feminin" value="feminin" />
+              Féminin
+            </label>
+            <label style="display:flex; gap:8px; align-items:center; text-transform:none; letter-spacing:0; font-weight:500; margin:0;">
+              <input type="checkbox" id="productLevel2Masculin" value="masculin" />
+              Masculin
+            </label>
+          </div>
+          <p class="note" style="margin:6px 0 0;">Tu peux cocher les deux.</p>
+        </div>
+
+        <div class="form-group">
+          <label>Type de pièce</label>
+          <select id="productLevel3">
+            <option value="">Sélectionner...</option>
+            <option value="manteaux">Manteaux</option>
+            <option value="vestes">Vestes</option>
+            <option value="pantalons">Pantalons</option>
+            <option value="robes">Robes</option>
+            <option value="hauts">Hauts</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tailles et stocks</label>
+          <div id="sizesContainer" style="margin-bottom:10px;"></div>
+          <button class="secondary-btn" type="button" id="addSizeBtn">+ Ajouter une taille</button>
+        </div>
+
+        <div class="form-group">
+          <label>Mannequin — Hauteur</label>
+          <input type="text" id="mannequinHeight" placeholder="ex: 1m78" />
+        </div>
+
+        <div class="form-group">
+          <label>Mannequin — Taille</label>
+          <input type="text" id="mannequinSize" placeholder="ex: M, Trois..." />
+        </div>
+
+        <div class="form-group">
+          <label>Guide des tailles</label>
+          <div id="sizeGuideContainer" style="margin-bottom:10px;"></div>
+          <button class="secondary-btn" type="button" id="addGuideBtn">+ Ajouter une ligne</button>
+        </div>
+
+        <button type="submit" id="submitBtn">Ajouter le produit</button>
+        <button type="button" class="cancel-btn" id="cancelBtn">Annuler la modification</button>
+      </form>
+    </div>
+
+    <div class="products-list">
+      <h2>Produits en ligne</h2>
+      <div id="productsList"></div>
+    </div>
+  </div>
+
+  </section>
+
+  <section id="articlesSection" data-section="articles" hidden>
+  <h2 style="font-size:20px; margin: 0 0 14px;">Articles (Évènements)</h2>
+
+  <p class="note">
+    Les articles ajoutés ici sont sauvegardés dans le navigateur (localStorage). Pour les publier sur GitHub Pages, exporte le JSON puis remplace le fichier <strong>assets/data/articles.json</strong> dans ton projet et fais un commit/push.
+  </p>
+
+  <div style="display:flex; gap:12px; flex-wrap:wrap; margin: 12px 0 28px;">
+    <button type="button" class="secondary-btn" id="exportArticlesBtn" style="width:auto;">Exporter les articles (JSON)</button>
+    <label style="display:flex; gap:10px; align-items:center; text-transform:none; letter-spacing:0; font-weight:500; margin:0;">
+      <span style="font-size:13px;">Importer (JSON)</span>
+      <input type="file" id="importArticlesFile" accept="application/json" />
+    </label>
+  </div>
+
+  <div class="admin-container">
+    <div class="form-section" id="articleFormSection">
+      <h2>Ajouter un article</h2>
+
+      <form id="articleForm">
+        <div class="form-group">
+          <label>ID de l’article</label>
+          <input type="text" id="articleId" placeholder="ex: lookbook-pe26" required />
+        </div>
+
+        <div class="form-group">
+          <label>Titre</label>
+          <input type="text" id="articleTitle" placeholder="ex: Lookbook Printemps & Été 2026" required />
+        </div>
+
+        <div class="form-group">
+          <label>Date</label>
+          <input type="text" id="articleDate" placeholder="ex: 3 février 2026" required />
+        </div>
+
+        <div class="form-group">
+          <label>Image principale (nom de fichier)</label>
+          <input type="text" id="articleImage" placeholder="ex: simone.jpg" />
+          <p class="note" style="margin:8px 0 0;">Astuce : mets juste le nom si l’image est dans assets/images/.</p>
+        </div>
+
+        <div class="form-group">
+          <label>Images carrousel (1 par ligne)</label>
+          <textarea id="articleImages" placeholder="simone.jpg\nlook2.jpg"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Extrait</label>
+          <textarea id="articleExcerpt" placeholder="Texte court affiché sur la page Évènements..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Contenu (texte)</label>
+          <textarea id="articleContent" placeholder="Écris simplement ton texte…\n\nDouble saut de ligne = nouveau paragraphe\nRetour à la ligne = saut de ligne\n**gras** et *italique*"></textarea>
+          <p class="note" style="margin:8px 0 0;">
+            Tu peux écrire sans HTML : les paragraphes, retours à la ligne, <strong>gras</strong> et <em>italique</em> sont automatisés sur le site.
+          </p>
+        </div>
+
+        <button type="submit" id="articleSubmitBtn">Ajouter l’article</button>
+        <button type="button" class="cancel-btn" id="articleCancelBtn">Annuler la modification</button>
+      </form>
+    </div>
+
+    <div class="products-list">
+      <h2>Articles</h2>
+      <div id="articlesAdminList"></div>
+    </div>
+  </div>
+
+  </section>
+
+  <section id="lookbooksSection" data-section="lookbooks" hidden>
+  <h2 style="font-size:20px; margin: 0 0 14px;">Lookbooks (Collections)</h2>
+
+  <p class="note">
+    Les lookbooks ajoutés ici sont sauvegardés dans le navigateur (localStorage). Pour les publier sur GitHub Pages, exporte le JSON puis remplace le fichier <strong>assets/data/lookbooks.json</strong> et fais un commit/push.
+  </p>
+
+  <div style="display:flex; gap:12px; flex-wrap:wrap; margin: 12px 0 28px;">
+    <button type="button" class="secondary-btn" id="exportLookbooksBtn" style="width:auto;">Exporter les lookbooks (JSON)</button>
+    <label style="display:flex; gap:10px; align-items:center; text-transform:none; letter-spacing:0; font-weight:500; margin:0;">
+      <span style="font-size:13px;">Importer (JSON)</span>
+      <input type="file" id="importLookbooksFile" accept="application/json" />
+    </label>
+  </div>
+
+  <div class="admin-container">
+    <div class="form-section" id="lookbookFormSection">
+      <h2>Ajouter un lookbook</h2>
+
+      <form id="lookbookForm">
+        <div class="form-group">
+          <label>ID du lookbook</label>
+          <input type="text" id="lookbookId" placeholder="ex: ss26" required />
+        </div>
+
+        <div class="form-group">
+          <label>Saison / libellé</label>
+          <input type="text" id="lookbookSeason" placeholder="ex: Première Collection" required />
+        </div>
+
+        <div class="form-group">
+          <label>Titre</label>
+          <input type="text" id="lookbookTitle" placeholder="ex: Printemps & Été 2026" required />
+        </div>
+
+        <div class="form-group">
+          <label>Images (1 par ligne)</label>
+          <textarea id="lookbookImages" placeholder="look1.jpg\nlook2.jpg\n..."></textarea>
+          <p class="note" style="margin:8px 0 0;">Astuce : mets juste les noms si les images sont dans assets/images/.</p>
+        </div>
+
+        <div class="form-group">
+          <label>Images (fichiers — multiple)</label>
+          <input type="file" id="lookbookImagesFiles" accept="image/*" multiple />
+          <p class="note" style="margin:8px 0 0;">
+            Astuce : sélectionne tes images ici, la liste ci-dessus sera remplie automatiquement (noms de fichiers).
+            Pour publier sur GitHub Pages, copie ensuite ces images dans <strong>assets/images/</strong> avec les mêmes noms.
+          </p>
+        </div>
+
+        <button type="submit" id="lookbookSubmitBtn">Ajouter le lookbook</button>
+        <button type="button" class="cancel-btn" id="lookbookCancelBtn">Annuler la modification</button>
+      </form>
+    </div>
+
+    <div class="products-list">
+      <h2>Lookbooks</h2>
+      <div id="lookbooksAdminList"></div>
+    </div>
+  </div>
+
+  </section>
+</body>
+</html>
