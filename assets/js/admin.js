@@ -55,7 +55,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const stored = window.ProductStore?.loadProducts?.() || [];
       const published = await window.loadPublishedProducts();
 
-      if (!Array.isArray(published) || published.length === 0) return;
+      // Si le JSON publié est accessible mais vide ([]), c'est un état valide.
+      if (!Array.isArray(published)) return;
 
       const storedArr = Array.isArray(stored) ? stored : [];
 
