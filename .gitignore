@@ -1,4 +1,7 @@
-server/
 node_modules/
 .env
 admin.html
+
+# Stripe secrets (do not commit)
+server/stripe-config.php
+server/stripe-config.local.php

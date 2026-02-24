@@ -1,0 +1,198 @@
+<?php
+
+declare(strict_types=1);
+
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store');
+
+function json_response(int $status, array $payload): void {
+    http_response_code($status);
+    echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+function load_config(): array {
+    $default = [
+        'stripe_secret_key' => getenv('STRIPE_SECRET_KEY') ?: '',
+        'allowed_price_ids' => [],
+        'allowed_countries' => ['FR'],
+        'shipping_rate_ids' => [],
+        'allow_promotion_codes' => true,
+    ];
+
+    $configPath = __DIR__ . '/stripe-config.php';
+    if (is_file($configPath)) {
+        $cfg = require $configPath;
+        if (is_array($cfg)) {
+            return array_replace($default, $cfg);
+        }
+    }
+
+    // Optional env fallbacks
+    $allowed = getenv('STRIPE_ALLOWED_PRICE_IDS');
+    if (is_string($allowed) && trim($allowed) !== '') {
+        $default['allowed_price_ids'] = array_values(array_filter(array_map('trim', explode(',', $allowed))));
+    }
+
+    $countries = getenv('STRIPE_ALLOWED_COUNTRIES');
+    if (is_string($countries) && trim($countries) !== '') {
+        $default['allowed_countries'] = array_values(array_filter(array_map('trim', explode(',', $countries))));
+    }
+
+    $shippingRates = getenv('STRIPE_SHIPPING_RATE_IDS');
+    if (is_string($shippingRates) && trim($shippingRates) !== '') {
+        $default['shipping_rate_ids'] = array_values(array_filter(array_map('trim', explode(',', $shippingRates))));
+    }
+
+    $promo = getenv('STRIPE_ALLOW_PROMO_CODES');
+    if (is_string($promo) && trim($promo) !== '') {
+        $default['allow_promotion_codes'] = in_array(strtolower(trim($promo)), ['1', 'true', 'yes', 'on'], true);
+    }
+
+    return $default;
+}
+
+function get_site_origin(): string {
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    $scheme = $https ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    return $scheme . '://' . $host;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    json_response(405, ['error' => 'Method not allowed']);
+}
+
+$raw = file_get_contents('php://input');
+$payload = json_decode($raw ?: '', true);
+if (!is_array($payload)) {
+    json_response(400, ['error' => 'Invalid JSON body']);
+}
+
+$items = $payload['items'] ?? null;
+if (!is_array($items) || count($items) === 0) {
+    json_response(400, ['error' => 'Cart is empty']);
+}
+
+$config = load_config();
+$secretKey = (string)($config['stripe_secret_key'] ?? '');
+if ($secretKey === '') {
+    json_response(500, ['error' => 'Stripe is not configured (missing STRIPE secret key)']);
+}
+
+$allowedPriceIds = $config['allowed_price_ids'] ?? [];
+$hasAllowlist = is_array($allowedPriceIds) && count($allowedPriceIds) > 0;
+$allowedLookup = [];
+if ($hasAllowlist) {
+    foreach ($allowedPriceIds as $pid) {
+        if (is_string($pid) && $pid !== '') {
+            $allowedLookup[$pid] = true;
+        }
+    }
+}
+
+$lineItems = [];
+foreach ($items as $item) {
+    if (!is_array($item)) continue;
+
+    $price = $item['price'] ?? $item['stripePriceId'] ?? null;
+    $qty = $item['quantity'] ?? 1;
+
+    if (!is_string($price) || trim($price) === '') {
+        json_response(400, ['error' => 'Missing price id in cart items']);
+    }
+
+    $price = trim($price);
+    $qty = (int)$qty;
+
+    if ($qty < 1 || $qty > 20) {
+        json_response(400, ['error' => 'Invalid quantity']);
+    }
+
+    if ($hasAllowlist && !isset($allowedLookup[$price])) {
+        json_response(400, ['error' => 'This product is not allowed for checkout']);
+    }
+
+    $lineItems[] = [
+        'price' => $price,
+        'quantity' => $qty,
+    ];
+}
+
+if (count($lineItems) === 0) {
+    json_response(400, ['error' => 'No valid items']);
+}
+
+$origin = get_site_origin();
+$successUrl = $origin . '/panier/?success=1&session_id={CHECKOUT_SESSION_ID}';
+$cancelUrl = $origin . '/panier/?canceled=1';
+
+$params = [
+    'mode' => 'payment',
+    'success_url' => $successUrl,
+    'cancel_url' => $cancelUrl,
+    'line_items' => $lineItems,
+    'shipping_address_collection' => [
+        'allowed_countries' => $config['allowed_countries'] ?? ['FR'],
+    ],
+    'billing_address_collection' => 'required',
+    'phone_number_collection' => ['enabled' => true],
+];
+
+if (!empty($config['allow_promotion_codes'])) {
+    $params['allow_promotion_codes'] = true;
+}
+
+$shippingRateIds = $config['shipping_rate_ids'] ?? [];
+if (is_array($shippingRateIds) && count($shippingRateIds) > 0) {
+    $shippingOptions = [];
+    foreach ($shippingRateIds as $shr) {
+        if (is_string($shr) && trim($shr) !== '') {
+            $shippingOptions[] = ['shipping_rate' => trim($shr)];
+        }
+    }
+    if (count($shippingOptions) > 0) {
+        $params['shipping_options'] = $shippingOptions;
+    }
+}
+
+$ch = curl_init('https://api.stripe.com/v1/checkout/sessions');
+if ($ch === false) {
+    json_response(500, ['error' => 'Unable to init Stripe request']);
+}
+
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        'Authorization: Bearer ' . $secretKey,
+        'Content-Type: application/x-www-form-urlencoded',
+    ],
+    CURLOPT_POSTFIELDS => http_build_query($params),
+]);
+
+$response = curl_exec($ch);
+$curlErr = curl_error($ch);
+$httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($response === false) {
+    json_response(502, ['error' => 'Stripe request failed', 'details' => $curlErr]);
+}
+
+$data = json_decode($response, true);
+if (!is_array($data)) {
+    json_response(502, ['error' => 'Invalid Stripe response']);
+}
+
+if ($httpCode < 200 || $httpCode >= 300) {
+    $msg = $data['error']['message'] ?? 'Stripe error';
+    json_response(502, ['error' => $msg]);
+}
+
+$url = $data['url'] ?? null;
+if (!is_string($url) || $url === '') {
+    json_response(502, ['error' => 'Stripe did not return a checkout URL']);
+}
+
+json_response(200, ['url' => $url]);

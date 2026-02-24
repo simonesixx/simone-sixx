@@ -335,6 +335,79 @@ function removeItem(index) {
   renderCart();
 }
 
+// ======================
+// CHECKOUT (STRIPE)
+// ======================
+
+async function checkout() {
+  const cart = loadCart();
+
+  if (!Array.isArray(cart) || cart.length === 0) {
+    alert("Votre panier est vide.");
+    return;
+  }
+
+  // On attend des items avec `stripePriceId` (Price ID Stripe) pour chaque ligne.
+  // Ex: price_123...
+  const countsByPriceId = new Map();
+  for (const item of cart) {
+    const priceId = item && typeof item === "object" ? (item.stripePriceId || item.priceId) : null;
+    if (!priceId) {
+      alert(
+        "Paiement non configuré : il manque l’ID Stripe (price_...) pour un article du panier."
+      );
+      return;
+    }
+    countsByPriceId.set(priceId, (countsByPriceId.get(priceId) || 0) + 1);
+  }
+
+  const items = Array.from(countsByPriceId.entries()).map(([price, quantity]) => ({
+    price,
+    quantity
+  }));
+
+  try {
+    const res = await fetch("server/create-checkout-session.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items })
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data && data.error ? data.error : "Erreur lors de la création du paiement.");
+    }
+
+    if (!data || !data.url) {
+      throw new Error("Réponse invalide du serveur de paiement.");
+    }
+
+    window.location.href = data.url;
+  } catch (e) {
+    alert(e && e.message ? e.message : "Erreur de paiement.");
+  }
+}
+
+// Expose pour les boutons HTML (onclick)
+window.checkout = checkout;
+
+// Retour de Stripe (success/cancel)
+try {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("success") === "1") {
+    saveCart([]);
+    updateCartCount();
+    renderCart();
+    // message simple (peut être remplacé par un bandeau UI plus tard)
+    alert("Paiement confirmé. Merci !");
+  } else if (params.get("canceled") === "1") {
+    // Paiement annulé/abandonné
+    // On ne vide pas le panier.
+  }
+} catch {
+  // ignore
+}
+
 renderCart();
 
 
@@ -386,6 +459,7 @@ function prevLook(e) {
 
 let selectedParfumFormat = null;
 let selectedParfumPrice = null;
+let selectedParfumStripePriceId = null;
 
 function renderParfumPrice(currentPrice, originalPrice = null) {
   const priceEl = document.getElementById("parfumPrice");
@@ -420,6 +494,7 @@ function selectFormat(el) {
 
   selectedParfumFormat = el.dataset.format;
   selectedParfumPrice = Number(el.dataset.price);
+  selectedParfumStripePriceId = el.dataset.stripePriceId || null;
 
   const originalPrice = el.dataset.originalPrice != null ? Number(el.dataset.originalPrice) : null;
   renderParfumPrice(selectedParfumPrice, originalPrice);
@@ -436,7 +511,8 @@ function addPerfumeToCart() {
   const product = {
     name: "La Chambre du Sixième Étage",
     format: selectedParfumFormat,
-    price: selectedParfumPrice
+    price: selectedParfumPrice,
+    stripePriceId: selectedParfumStripePriceId || null
   };
 
   const cart = loadCart();
