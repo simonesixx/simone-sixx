@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   // =========================
   // NAVIGATION PAR ONGLETS
   // =========================
@@ -46,6 +46,45 @@ document.addEventListener("DOMContentLoaded", () => {
   })();
 
   window.ProductStore?.seedFromGlobalProducts();
+
+  async function seedProductsFromPublishedIfSuspicious() {
+    try {
+      if (!window.ProductStore?.storageAvailable) return;
+      if (typeof window.loadPublishedProducts !== "function") return;
+
+      const stored = window.ProductStore?.loadProducts?.() || [];
+      const published = await window.loadPublishedProducts();
+
+      if (!Array.isArray(published) || published.length === 0) return;
+
+      const storedArr = Array.isArray(stored) ? stored : [];
+
+      const hasRobea = storedArr.some((p) => {
+        const id = String(p?.id || "").toLowerCase().trim();
+        const name = String(p?.name || "").toLowerCase().trim();
+        return id === "robea" || name === "robea";
+      });
+
+      const storedIds = new Set(storedArr.map(p => String(p?.id || "").trim()).filter(Boolean));
+      const publishedIds = new Set(published.map(p => String(p?.id || "").trim()).filter(Boolean));
+
+      let overlapCount = 0;
+      for (const id of storedIds) {
+        if (publishedIds.has(id)) overlapCount += 1;
+      }
+
+      const storedIsEmpty = storedArr.length === 0;
+      const storedLooksTruncated = storedArr.length > 0 && storedArr.length < published.length && overlapCount === 0;
+      const storedMissingMany = storedArr.length > 0 && storedArr.length < published.length && overlapCount < Math.min(2, storedArr.length);
+
+      const shouldResetToPublished = storedIsEmpty || hasRobea || storedLooksTruncated || storedMissingMany;
+      if (!shouldResetToPublished) return;
+
+      window.ProductStore?.saveProducts?.(published);
+    } catch {
+      // ignore
+    }
+  }
 
   const form = document.getElementById("productForm");
   const productsList = document.getElementById("productsList");
@@ -547,6 +586,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   resetDynamicSections();
+  await seedProductsFromPublishedIfSuspicious();
   renderList();
 
   // =========================
