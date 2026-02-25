@@ -450,12 +450,30 @@ if ($emailTo !== '' && empty($order['email_sent'])) {
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-Type: text/plain; charset=utf-8';
     $headers[] = 'From: ' . $emailFrom;
+    // Helps some MTAs; actual envelope sender is set via -f below when possible.
+    $headers[] = 'Return-Path: ' . $emailFrom;
     if ($custEmail !== '') {
         $headers[] = 'Reply-To: ' . $custEmail;
     }
 
-    $ok = @mail($emailTo, $subject, $body, implode("\r\n", $headers));
+    $headersStr = implode("\r\n", $headers);
+
+    // Improve deliverability on shared hosting by setting the envelope sender.
+    // Many providers require a domain-local sender matching SPF/DKIM.
+    $envelopeFrom = null;
+    if (preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]+$/', $emailFrom)) {
+        $envelopeFrom = $emailFrom;
+    }
+
+    if ($envelopeFrom !== null) {
+        $ok = @mail($emailTo, $subject, $body, $headersStr, '-f' . $envelopeFrom);
+    } else {
+        $ok = @mail($emailTo, $subject, $body, $headersStr);
+    }
     $order['email_to'] = $emailTo;
+    $order['email_from'] = $emailFrom;
+    $order['email_envelope_from'] = $envelopeFrom;
+    $order['email_method'] = 'mail';
     $order['email_sent'] = (bool)$ok;
     $order['email_sent_at'] = $ok ? gmdate('c') : null;
     if (!$ok) {
