@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-header('X-Simone-Stripe: 2026-02-25-03');
+header('X-Simone-Stripe: 2026-02-25-04');
 
 // Quick deployment/route check that should always return immediately.
 // Use: GET /server/create-checkout-session.php?probe=1
@@ -17,7 +17,7 @@ if (($_GET['probe'] ?? null) === '1') {
         'ok' => true,
         'probe' => true,
         'service' => 'simonesixx-stripe',
-        'version' => '2026-02-25-03',
+        'version' => '2026-02-25-04',
         'time' => gmdate('c'),
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
@@ -211,6 +211,17 @@ $params = [
     'billing_address_collection' => 'required',
     'phone_number_collection' => ['enabled' => true],
 ];
+
+// Minimal mode to isolate issues: removes optional Checkout params.
+// Use: POST /server/create-checkout-session.php?minimal=1
+if (($_GET['minimal'] ?? null) === '1') {
+    $params = [
+        'mode' => 'payment',
+        'success_url' => $successUrl,
+        'cancel_url' => $cancelUrl,
+        'line_items' => $lineItems,
+    ];
+}
 
 if (!empty($config['allow_promotion_codes'])) {
     $params['allow_promotion_codes'] = true;
