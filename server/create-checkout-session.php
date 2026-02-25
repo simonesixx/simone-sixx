@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 // Avoid long/hanging requests (reverse proxies may 504 first).
-@set_time_limit(15);
+@set_time_limit(12);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -237,17 +237,25 @@ if ($ch === false) {
 curl_setopt_array($ch, [
     CURLOPT_POST => true,
     CURLOPT_RETURNTRANSFER => true,
-    // Keep timeouts short so we return JSON errors before the proxy 504s.
-    CURLOPT_CONNECTTIMEOUT => 3,
-    CURLOPT_TIMEOUT => 8,
+    // Keep timeouts very short so we can return JSON before the proxy 504s.
+    CURLOPT_NOSIGNAL => 1,
+    CURLOPT_CONNECTTIMEOUT => 2,
+    CURLOPT_TIMEOUT => 4,
     // Some shared hosts have IPv6 DNS/routing issues; prefer IPv4.
     CURLOPT_IPRESOLVE => defined('CURL_IPRESOLVE_V4') ? CURL_IPRESOLVE_V4 : 0,
     CURLOPT_HTTPHEADER => [
         'Authorization: Bearer ' . $secretKey,
         'Content-Type: application/x-www-form-urlencoded',
+        // Avoid delays from "Expect: 100-continue" on some proxies.
+        'Expect:',
     ],
     CURLOPT_POSTFIELDS => http_build_query($params),
 ]);
+
+// Some environments have flaky HTTP/2; force HTTP/1.1 when supported.
+if (defined('CURL_HTTP_VERSION_1_1')) {
+    curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+}
 
 $start = microtime(true);
 $response = curl_exec($ch);
