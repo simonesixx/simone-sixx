@@ -1,0 +1,22 @@
+# Security hardening for Stripe server endpoints
+
+# Disable directory listing
+Options -Indexes
+
+# Block access to config files (should never be readable from the web)
+<Files "stripe-config.php">
+  Require all denied
+</Files>
+<Files "stripe-config.sample.php">
+  Require all denied
+</Files>
+<Files "stripe-config.local.php">
+  Require all denied
+</Files>
+
+# (Optional) Restrict methods: only allow POST on the endpoint
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteRule ^create-checkout-session\.php$ - [L]
+</IfModule>
