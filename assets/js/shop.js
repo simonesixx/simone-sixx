@@ -339,11 +339,28 @@ function removeItem(index) {
 // CHECKOUT (STRIPE)
 // ======================
 
-async function checkout() {
+async function checkout(buttonEl) {
+  const btn =
+    (buttonEl && typeof buttonEl === "object" && "disabled" in buttonEl)
+      ? buttonEl
+      : (document.activeElement && document.activeElement.tagName === "BUTTON")
+        ? document.activeElement
+        : document.querySelector(".cart-footer .add-to-cart");
+
+  const originalLabel = btn && typeof btn.textContent === "string" ? btn.textContent : null;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Chargement…";
+  }
+
   const cart = loadCart();
 
   if (!Array.isArray(cart) || cart.length === 0) {
     alert("Votre panier est vide.");
+    if (btn) {
+      btn.disabled = false;
+      if (originalLabel != null) btn.textContent = originalLabel;
+    }
     return;
   }
 
@@ -370,6 +387,10 @@ async function checkout() {
 
     if (!priceId) {
       alert("Paiement non configuré : il manque l’ID Stripe (price_...) pour un article du panier.");
+      if (btn) {
+        btn.disabled = false;
+        if (originalLabel != null) btn.textContent = originalLabel;
+      }
       return;
     }
     countsByPriceId.set(priceId, (countsByPriceId.get(priceId) || 0) + 1);
@@ -381,11 +402,17 @@ async function checkout() {
   }));
 
   try {
+    const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 20000) : null;
+
     const res = await fetch("server/create-checkout-session.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items })
+      body: JSON.stringify({ items }),
+      signal: controller ? controller.signal : undefined
     });
+
+    if (timeoutId) clearTimeout(timeoutId);
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -396,9 +423,17 @@ async function checkout() {
       throw new Error("Réponse invalide du serveur de paiement.");
     }
 
-    window.location.href = data.url;
+    window.location.assign(data.url);
   } catch (e) {
-    alert(e && e.message ? e.message : "Erreur de paiement.");
+    const msg = e && e.name === "AbortError"
+      ? "Le serveur de paiement ne répond pas (timeout). Réessaie dans quelques secondes."
+      : (e && e.message ? e.message : "Erreur de paiement.");
+    alert(msg);
+
+    if (btn) {
+      btn.disabled = false;
+      if (originalLabel != null) btn.textContent = originalLabel;
+    }
   }
 }
 
