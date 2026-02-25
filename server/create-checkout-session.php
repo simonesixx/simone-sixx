@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-// Avoid long/hanging requests.
-@set_time_limit(25);
+// Avoid long/hanging requests (reverse proxies may 504 first).
+@set_time_limit(15);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-header('X-Simone-Stripe: 2026-02-25-01');
+header('X-Simone-Stripe: 2026-02-25-02');
 
 // Return JSON even on fatal errors (helps debugging on shared hosting).
 register_shutdown_function(function (): void {
@@ -223,8 +223,9 @@ if ($ch === false) {
 curl_setopt_array($ch, [
     CURLOPT_POST => true,
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_CONNECTTIMEOUT => 5,
-    CURLOPT_TIMEOUT => 12,
+    // Keep timeouts short so we return JSON errors before the proxy 504s.
+    CURLOPT_CONNECTTIMEOUT => 3,
+    CURLOPT_TIMEOUT => 8,
     // Some shared hosts have IPv6 DNS/routing issues; prefer IPv4.
     CURLOPT_IPRESOLVE => defined('CURL_IPRESOLVE_V4') ? CURL_IPRESOLVE_V4 : 0,
     CURLOPT_HTTPHEADER => [
@@ -245,6 +246,7 @@ if ($response === false) {
     json_response(502, [
         'error' => 'Stripe request failed',
         'details' => $curlErr,
+        'curl_errno' => function_exists('curl_errno') ? curl_errno($ch) : null,
         'http_code' => $httpCode,
         'duration_ms' => $durationMs,
     ]);
