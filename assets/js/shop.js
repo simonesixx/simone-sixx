@@ -403,9 +403,10 @@ async function checkout(buttonEl) {
 
   try {
     const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-    const timeoutId = controller ? setTimeout(() => controller.abort(), 20000) : null;
+    // Give the server a bit more time to respond with a useful error.
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 30000) : null;
 
-    const res = await fetch("server/create-checkout-session.php", {
+    const res = await fetch("/server/create-checkout-session.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items }),
