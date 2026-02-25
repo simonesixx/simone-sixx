@@ -106,9 +106,19 @@ function load_config(): array {
 }
 
 function get_site_origin(): string {
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+
+    // Respect common reverse-proxy headers (cPanel/OpenResty).
+    $xfProto = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '';
+    if (is_string($xfProto) && $xfProto !== '') {
+        $proto = strtolower(trim(explode(',', $xfProto)[0]));
+        if ($proto === 'https' || $proto === 'http') {
+            return $proto . '://' . $host;
+        }
+    }
+
     $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
     $scheme = $https ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? '';
     return $scheme . '://' . $host;
 }
 
