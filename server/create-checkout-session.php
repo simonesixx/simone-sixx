@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-header('X-Simone-Stripe: 2026-02-25-04');
+header('X-Simone-Stripe: 2026-02-25-05');
 
 // Quick deployment/route check that should always return immediately.
 // Use: GET /server/create-checkout-session.php?probe=1
@@ -17,7 +17,7 @@ if (($_GET['probe'] ?? null) === '1') {
         'ok' => true,
         'probe' => true,
         'service' => 'simonesixx-stripe',
-        'version' => '2026-02-25-04',
+        'version' => '2026-02-25-05',
         'time' => gmdate('c'),
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
@@ -151,6 +151,10 @@ if ($secretKey === '') {
 // Use: POST /server/create-checkout-session.php?dryrun=1
 $dryrun = ($_GET['dryrun'] ?? null) === '1';
 
+// Minimal mode to isolate issues: removes optional Checkout params.
+// Use: POST /server/create-checkout-session.php?minimal=1
+$minimal = ($_GET['minimal'] ?? null) === '1';
+
 $allowedPriceIds = $config['allowed_price_ids'] ?? [];
 $hasAllowlist = is_array($allowedPriceIds) && count($allowedPriceIds) > 0;
 $allowedLookup = [];
@@ -215,30 +219,22 @@ $params = [
     'success_url' => $successUrl,
     'cancel_url' => $cancelUrl,
     'line_items' => $lineItems,
-    'shipping_address_collection' => [
-        'allowed_countries' => $config['allowed_countries'] ?? ['FR'],
-    ],
-    'billing_address_collection' => 'required',
-    'phone_number_collection' => ['enabled' => true],
 ];
 
-// Minimal mode to isolate issues: removes optional Checkout params.
-// Use: POST /server/create-checkout-session.php?minimal=1
-if (($_GET['minimal'] ?? null) === '1') {
-    $params = [
-        'mode' => 'payment',
-        'success_url' => $successUrl,
-        'cancel_url' => $cancelUrl,
-        'line_items' => $lineItems,
+if (!$minimal) {
+    $params['shipping_address_collection'] = [
+        'allowed_countries' => $config['allowed_countries'] ?? ['FR'],
     ];
+    $params['billing_address_collection'] = 'required';
+    $params['phone_number_collection'] = ['enabled' => true];
 }
 
-if (!empty($config['allow_promotion_codes'])) {
+if (!$minimal && !empty($config['allow_promotion_codes'])) {
     $params['allow_promotion_codes'] = true;
 }
 
 $shippingRateIds = $config['shipping_rate_ids'] ?? [];
-if (is_array($shippingRateIds) && count($shippingRateIds) > 0) {
+if (!$minimal && is_array($shippingRateIds) && count($shippingRateIds) > 0) {
     $shippingOptions = [];
     foreach ($shippingRateIds as $shr) {
         if (is_string($shr) && trim($shr) !== '') {
