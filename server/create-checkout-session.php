@@ -123,6 +123,10 @@ if ($secretKey === '') {
     json_response(500, ['error' => 'Stripe is not configured (missing STRIPE secret key)']);
 }
 
+// Debug: dry-run to validate request/config/line_items without calling Stripe.
+// Use: POST /server/create-checkout-session.php?dryrun=1
+$dryrun = ($_GET['dryrun'] ?? null) === '1';
+
 $allowedPriceIds = $config['allowed_price_ids'] ?? [];
 $hasAllowlist = is_array($allowedPriceIds) && count($allowedPriceIds) > 0;
 $allowedLookup = [];
@@ -164,6 +168,18 @@ foreach ($items as $item) {
 
 if (count($lineItems) === 0) {
     json_response(400, ['error' => 'No valid items']);
+}
+
+if ($dryrun) {
+    json_response(200, [
+        'ok' => true,
+        'dryrun' => true,
+        'line_items' => $lineItems,
+        'allowed_countries' => $config['allowed_countries'] ?? ['FR'],
+        'shipping_rate_ids_count' => is_array($config['shipping_rate_ids'] ?? null) ? count($config['shipping_rate_ids']) : 0,
+        'allow_promotion_codes' => !empty($config['allow_promotion_codes']),
+        'time' => gmdate('c'),
+    ]);
 }
 
 $origin = get_site_origin();
