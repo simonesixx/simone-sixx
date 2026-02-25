@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
+header('X-Simone-Stripe: 2026-02-25-01');
 
 // Return JSON even on fatal errors (helps debugging on shared hosting).
 register_shutdown_function(function (): void {
