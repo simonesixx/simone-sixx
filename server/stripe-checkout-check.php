@@ -81,7 +81,7 @@ $price = is_array($payload) ? ($payload['price'] ?? null) : null;
 
 // Default to the 30ml test price used elsewhere.
 if (!is_string($price) || trim($price) === '') {
-    $price = 'price_1T4LB60XZVE1puxSTKgblJPz';
+    $price = 'price_1T4Ypg1pW7akGXOM8wnRfRar';
 }
 
 $origin = get_site_origin();

@@ -449,9 +449,20 @@ async function checkout(buttonEl) {
 
   // On attend des items avec `stripePriceId` (Price ID Stripe) pour chaque ligne.
   // Ex: price_123...
+  const legacyPriceIdMap = new Map([
+    // Anciennes valeurs (test) → nouvelles valeurs (test)
+    ["price_1T4LB60XZVE1puxSTKgblJPz", "price_1T4Ypg1pW7akGXOM8wnRfRar"], // 30 ml
+    ["price_1T4Vko0XZVE1puxSJUSVeBjD", "price_1T4Yph1pW7akGXOM9qTPSGtH"]  // 50 ml
+  ]);
+
   const countsByPriceId = new Map();
   for (const item of cart) {
     let priceId = item && typeof item === "object" ? (item.stripePriceId || item.priceId) : null;
+
+    // Si un ancien panier contient un Price ID obsolète, on le traduit.
+    if (priceId && legacyPriceIdMap.has(priceId)) {
+      priceId = legacyPriceIdMap.get(priceId);
+    }
 
     // Compat: si un ancien panier / une ancienne page n'a pas l'attribut `data-stripe-price-id`
     // on déduit l'ID Stripe du parfum via son format.
@@ -461,9 +472,9 @@ async function checkout(buttonEl) {
 
       if (name.includes("la chambre du sixième étage") || name.includes("la chambre du sixieme etage")) {
         if (format === "30 ml" || format === "30ml") {
-          priceId = "price_1T4LB60XZVE1puxSTKgblJPz";
+          priceId = "price_1T4Ypg1pW7akGXOM8wnRfRar";
         } else if (format === "50 ml" || format === "50ml") {
-          priceId = "price_1T4Vko0XZVE1puxSJUSVeBjD";
+          priceId = "price_1T4Yph1pW7akGXOM9qTPSGtH";
         }
       }
     }
