@@ -351,11 +351,25 @@ async function checkout() {
   // Ex: price_123...
   const countsByPriceId = new Map();
   for (const item of cart) {
-    const priceId = item && typeof item === "object" ? (item.stripePriceId || item.priceId) : null;
+    let priceId = item && typeof item === "object" ? (item.stripePriceId || item.priceId) : null;
+
+    // Compat: si un ancien panier / une ancienne page n'a pas l'attribut `data-stripe-price-id`
+    // on déduit l'ID Stripe du parfum via son format.
+    if (!priceId && item && typeof item === "object") {
+      const name = String(item.name || "").toLowerCase();
+      const format = String(item.format || item.size || "").toLowerCase().trim();
+
+      if (name.includes("la chambre du sixième étage") || name.includes("la chambre du sixieme etage")) {
+        if (format === "30 ml" || format === "30ml") {
+          priceId = "price_1T4LB60XZVE1puxSTKgblJPz";
+        } else if (format === "50 ml" || format === "50ml") {
+          priceId = "price_1T4Vko0XZVE1puxSJUSVeBjD";
+        }
+      }
+    }
+
     if (!priceId) {
-      alert(
-        "Paiement non configuré : il manque l’ID Stripe (price_...) pour un article du panier."
-      );
+      alert("Paiement non configuré : il manque l’ID Stripe (price_...) pour un article du panier.");
       return;
     }
     countsByPriceId.set(priceId, (countsByPriceId.get(priceId) || 0) + 1);
