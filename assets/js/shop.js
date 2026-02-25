@@ -489,7 +489,7 @@ async function checkout(buttonEl) {
     // Give the server a bit more time to respond with a useful error.
     const timeoutId = controller ? setTimeout(() => controller.abort(), 30000) : null;
 
-    const res = await fetch("/server/checkout.php?ship=1", {
+    const res = await fetch("/server/checkout.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

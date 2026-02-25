@@ -191,8 +191,8 @@ $dryrun = ($_GET['dryrun'] ?? null) === '1';
 $full = ($_GET['full'] ?? null) === '1';
 $minimal = ($_GET['minimal'] ?? null) === '1' ? true : !$full;
 
-// Step-by-step enablement: collect shipping address without enabling other optional fields.
-// Use: POST /server/create-checkout-session.php?ship=1
+// Note: shipping address is collected on-site (panier form) and sent as Customer shipping.
+// We intentionally do NOT enable Stripe Checkout shipping address collection to avoid duplicates.
 $ship = ($_GET['ship'] ?? null) === '1';
 
 // Step-by-step enablement: collect phone number without enabling other optional fields.
@@ -346,21 +346,11 @@ if ($shouldCreateCustomer) {
     $params['customer'] = $custId;
 }
 
-if ($ship) {
-    $params['shipping_address_collection'] = [
-        'allowed_countries' => $config['allowed_countries'] ?? ['FR'],
-    ];
-}
-
 if ($phone) {
     $params['phone_number_collection'] = ['enabled' => true];
 }
 
 if (!$minimal) {
-    $params['shipping_address_collection'] = [
-        'allowed_countries' => $config['allowed_countries'] ?? ['FR'],
-    ];
-    $params['billing_address_collection'] = 'required';
     $params['phone_number_collection'] = ['enabled' => true];
 }
 
@@ -368,18 +358,8 @@ if (!$minimal && !empty($config['allow_promotion_codes'])) {
     $params['allow_promotion_codes'] = true;
 }
 
-$shippingRateIds = $config['shipping_rate_ids'] ?? [];
-if (!$minimal && is_array($shippingRateIds) && count($shippingRateIds) > 0) {
-    $shippingOptions = [];
-    foreach ($shippingRateIds as $shr) {
-        if (is_string($shr) && trim($shr) !== '') {
-            $shippingOptions[] = ['shipping_rate' => trim($shr)];
-        }
-    }
-    if (count($shippingOptions) > 0) {
-        $params['shipping_options'] = $shippingOptions;
-    }
-}
+// Shipping options are disabled here because Checkout shipping address collection is disabled.
+// If you want shipping pricing, implement a shipping line item chosen on-site.
 
 $ch = curl_init('https://api.stripe.com/v1/checkout/sessions');
 if ($ch === false) {
