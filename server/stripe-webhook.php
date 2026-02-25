@@ -20,6 +20,7 @@ function load_config(): array {
         'orders_email_to' => getenv('ORDERS_EMAIL_TO') ?: '',
         'orders_email_from' => getenv('ORDERS_EMAIL_FROM') ?: '',
         'orders_dir' => __DIR__ . '/orders',
+        '__config_path' => null,
     ];
 
     $configCandidates = [
@@ -42,7 +43,9 @@ function load_config(): array {
         if (!is_file($configPath)) continue;
         $cfg = require $configPath;
         if (is_array($cfg)) {
-            return array_replace($default, $cfg);
+            $merged = array_replace($default, $cfg);
+            $merged['__config_path'] = $configPath;
+            return $merged;
         }
     }
 
@@ -180,6 +183,29 @@ function ensure_dir(string $dir): void {
 }
 
 $config = load_config();
+
+// Probe endpoint for quick validation in browser without triggering Stripe.
+// Use: GET /server/stripe-webhook.php?probe=1
+if (($_GET['probe'] ?? null) === '1') {
+    $secretKey = (string)($config['stripe_secret_key'] ?? '');
+    $webhookSecret = (string)($config['stripe_webhook_secret'] ?? '');
+    $stripeMode = 'unknown';
+    if (str_starts_with($secretKey, 'sk_test_')) {
+        $stripeMode = 'test';
+    } elseif (str_starts_with($secretKey, 'sk_live_')) {
+        $stripeMode = 'live';
+    }
+    json_response(200, [
+        'ok' => true,
+        'probe' => true,
+        'service' => 'simonesixx-webhook',
+        'stripe_mode' => $stripeMode,
+        'secret_prefix' => $secretKey !== '' ? substr($secretKey, 0, 8) : null,
+        'webhook_secret_set' => $webhookSecret !== '',
+        'config_path' => is_string($config['__config_path'] ?? null) ? $config['__config_path'] : null,
+        'orders_email_to_set' => ((string)($config['orders_email_to'] ?? '')) !== '',
+    ]);
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(405, ['error' => 'Method not allowed']);

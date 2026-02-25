@@ -29,12 +29,26 @@ function append_checkout_log(array $row): void {
 // Quick deployment/route check that should always return immediately.
 // Use: GET /server/create-checkout-session.php?probe=1
 if (($_GET['probe'] ?? null) === '1') {
+    $config = load_config();
+    $secretKey = (string)($config['stripe_secret_key'] ?? '');
+    $stripeMode = 'unknown';
+    if (str_starts_with($secretKey, 'sk_test_')) {
+        $stripeMode = 'test';
+    } elseif (str_starts_with($secretKey, 'sk_live_')) {
+        $stripeMode = 'live';
+    }
+    $secretPrefix = $secretKey !== '' ? substr($secretKey, 0, 8) : null;
+
     http_response_code(200);
     echo json_encode([
         'ok' => true,
         'probe' => true,
         'service' => 'simonesixx-stripe',
         'version' => defined('SIMONE_STRIPE_VERSION') ? SIMONE_STRIPE_VERSION : null,
+        'stripe_mode' => $stripeMode,
+        'secret_prefix' => $secretPrefix,
+        'config_path' => is_string($config['__config_path'] ?? null) ? $config['__config_path'] : null,
+        'allowed_price_ids_count' => is_array($config['allowed_price_ids'] ?? null) ? count($config['allowed_price_ids']) : 0,
         'time' => gmdate('c'),
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
@@ -68,6 +82,7 @@ function load_config(): array {
         'allowed_countries' => ['FR'],
         'shipping_rate_ids' => [],
         'allow_promotion_codes' => true,
+        '__config_path' => null,
     ];
 
     $configCandidates = [
@@ -94,7 +109,9 @@ function load_config(): array {
         if (!is_file($configPath)) continue;
         $cfg = require $configPath;
         if (is_array($cfg)) {
-            return array_replace($default, $cfg);
+            $merged = array_replace($default, $cfg);
+            $merged['__config_path'] = $configPath;
+            return $merged;
         }
     }
 
