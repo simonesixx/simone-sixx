@@ -7,7 +7,20 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-header('X-Simone-Stripe: 2026-02-25-10');
+header('X-Simone-Stripe: 2026-02-25-11');
+
+function append_checkout_log(array $row): void {
+    $dir = __DIR__ . '/orders';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    $path = $dir . '/checkout-log.jsonl';
+    $row['ts'] = gmdate('c');
+    $line = json_encode($row, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    if (is_string($line)) {
+        @file_put_contents($path, $line . "\n", FILE_APPEND | LOCK_EX);
+    }
+}
 
 // Quick deployment/route check that should always return immediately.
 // Use: GET /server/create-checkout-session.php?probe=1
@@ -17,7 +30,7 @@ if (($_GET['probe'] ?? null) === '1') {
         'ok' => true,
         'probe' => true,
         'service' => 'simonesixx-stripe',
-        'version' => '2026-02-25-10',
+        'version' => '2026-02-25-11',
         'time' => gmdate('c'),
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
@@ -142,6 +155,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(405, ['error' => 'Method not allowed']);
 }
 
+$reqId = bin2hex(random_bytes(6));
+$t0 = microtime(true);
+append_checkout_log([
+    'req_id' => $reqId,
+    'stage' => 'start',
+    'host' => $_SERVER['HTTP_HOST'] ?? null,
+    'uri' => $_SERVER['REQUEST_URI'] ?? null,
+]);
+
 if (!function_exists('curl_init')) {
     json_response(500, ['error' => 'Server is missing PHP cURL extension (required for Stripe).']);
 }
@@ -149,6 +171,7 @@ if (!function_exists('curl_init')) {
 $raw = file_get_contents('php://input');
 $payload = json_decode($raw ?: '', true);
 if (!is_array($payload)) {
+    append_checkout_log(['req_id' => $reqId, 'stage' => 'bad_json']);
     json_response(400, ['error' => 'Invalid JSON body']);
 }
 
@@ -189,12 +212,14 @@ if (!is_array($shipping)) {
 
 $items = $payload['items'] ?? null;
 if (!is_array($items) || count($items) === 0) {
+    append_checkout_log(['req_id' => $reqId, 'stage' => 'empty_cart']);
     json_response(400, ['error' => 'Cart is empty']);
 }
 
 $config = load_config();
 $secretKey = (string)($config['stripe_secret_key'] ?? '');
 if ($secretKey === '') {
+    append_checkout_log(['req_id' => $reqId, 'stage' => 'missing_secret']);
     json_response(500, ['error' => 'Stripe is not configured (missing STRIPE secret key)']);
 }
 
@@ -259,6 +284,7 @@ if (count($lineItems) === 0) {
 }
 
 if ($dryrun) {
+    append_checkout_log(['req_id' => $reqId, 'stage' => 'dryrun_ok', 'duration_ms' => (int)round((microtime(true) - $t0) * 1000)]);
     json_response(200, [
         'ok' => true,
         'dryrun' => true,
@@ -338,6 +364,12 @@ if ($shouldCreateCustomer) {
     curl_close($chCustomer);
 
     if (!is_string($respCustomer) || $respCustomer === '') {
+        append_checkout_log([
+            'req_id' => $reqId,
+            'stage' => 'stripe_customer_failed',
+            'http_code' => $custHttp,
+            'curl_errno' => $custErrNo,
+        ]);
         json_response(502, [
             'error' => 'Stripe customer request failed',
             'details' => $custErr ?: null,
@@ -350,6 +382,13 @@ if ($shouldCreateCustomer) {
     $custId = is_array($custData) ? ($custData['id'] ?? null) : null;
     if ($custHttp < 200 || $custHttp >= 300 || !is_string($custId) || $custId === '') {
         $msg = is_array($custData) ? ($custData['error']['message'] ?? 'Stripe customer error') : 'Stripe customer error';
+        append_checkout_log([
+            'req_id' => $reqId,
+            'stage' => 'stripe_customer_error',
+            'http_code' => $custHttp,
+            'stripe_type' => is_array($custData) ? ($custData['error']['type'] ?? null) : null,
+            'stripe_code' => is_array($custData) ? ($custData['error']['code'] ?? null) : null,
+        ]);
         json_response(502, [
             'error' => $msg,
             'stripe_type' => is_array($custData) ? ($custData['error']['type'] ?? null) : null,
@@ -414,6 +453,13 @@ $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 if ($response === false) {
+    append_checkout_log([
+        'req_id' => $reqId,
+        'stage' => 'stripe_session_failed',
+        'http_code' => $httpCode,
+        'curl_errno' => $curlErrNo,
+        'duration_ms' => $durationMs,
+    ]);
     json_response(502, [
         'error' => 'Stripe request failed',
         'details' => $curlErr,
@@ -425,11 +471,20 @@ if ($response === false) {
 
 $data = json_decode($response, true);
 if (!is_array($data)) {
+    append_checkout_log(['req_id' => $reqId, 'stage' => 'stripe_bad_json', 'http_code' => $httpCode, 'duration_ms' => $durationMs]);
     json_response(502, ['error' => 'Invalid Stripe response']);
 }
 
 if ($httpCode < 200 || $httpCode >= 300) {
     $msg = $data['error']['message'] ?? 'Stripe error';
+    append_checkout_log([
+        'req_id' => $reqId,
+        'stage' => 'stripe_error',
+        'http_code' => $httpCode,
+        'stripe_type' => $data['error']['type'] ?? null,
+        'stripe_code' => $data['error']['code'] ?? null,
+        'duration_ms' => $durationMs,
+    ]);
     json_response(502, [
         'error' => $msg,
         'stripe_type' => $data['error']['type'] ?? null,
@@ -442,6 +497,7 @@ if ($httpCode < 200 || $httpCode >= 300) {
 
 $url = $data['url'] ?? null;
 if (!is_string($url) || $url === '') {
+    append_checkout_log(['req_id' => $reqId, 'stage' => 'missing_url', 'http_code' => $httpCode, 'duration_ms' => $durationMs]);
     json_response(502, [
         'error' => 'Stripe did not return a checkout URL',
         'http_code' => $httpCode,
@@ -449,5 +505,12 @@ if (!is_string($url) || $url === '') {
         'response_sample' => substr($response, 0, 250),
     ]);
 }
+
+append_checkout_log([
+    'req_id' => $reqId,
+    'stage' => 'ok',
+    'stripe_duration_ms' => $durationMs,
+    'total_duration_ms' => (int)round((microtime(true) - $t0) * 1000),
+]);
 
 json_response(200, ['url' => $url, 'duration_ms' => $durationMs]);
