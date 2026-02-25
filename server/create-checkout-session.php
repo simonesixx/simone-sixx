@@ -38,8 +38,28 @@ function load_config(): array {
         'allow_promotion_codes' => true,
     ];
 
-    $configPath = __DIR__ . '/stripe-config.php';
-    if (is_file($configPath)) {
+    $configCandidates = [
+        // Standard location (inside /server)
+        __DIR__ . '/stripe-config.php',
+    ];
+
+    // Safer location (outside public_html) if available.
+    // When DOCUMENT_ROOT is like /home/<user>/public_html, this becomes /home/<user>/stripe-config.php
+    $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? null;
+    if (is_string($docRoot) && $docRoot !== '') {
+        $homeConfig = rtrim(dirname($docRoot), '/') . '/stripe-config.php';
+        $configCandidates[] = $homeConfig;
+    }
+
+    // Optional: explicit path
+    $envPath = getenv('STRIPE_CONFIG_PATH');
+    if (is_string($envPath) && trim($envPath) !== '') {
+        $configCandidates[] = trim($envPath);
+    }
+
+    foreach ($configCandidates as $configPath) {
+        if (!is_string($configPath) || $configPath === '') continue;
+        if (!is_file($configPath)) continue;
         $cfg = require $configPath;
         if (is_array($cfg)) {
             return array_replace($default, $cfg);
