@@ -739,6 +739,18 @@ body.home .site-footer {
   outline: none;
 }
 
+.checkout-contact-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 768px) {
+  .checkout-contact {
+    max-width: none;
+  }
+}
+
 .sizes {
   margin-top: 20px;   /* espace entre le texte et le bloc tailles */
 }

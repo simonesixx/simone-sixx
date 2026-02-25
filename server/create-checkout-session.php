@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-header('X-Simone-Stripe: 2026-02-25-09');
+header('X-Simone-Stripe: 2026-02-25-10');
 
 // Quick deployment/route check that should always return immediately.
 // Use: GET /server/create-checkout-session.php?probe=1
@@ -17,7 +17,7 @@ if (($_GET['probe'] ?? null) === '1') {
         'ok' => true,
         'probe' => true,
         'service' => 'simonesixx-stripe',
-        'version' => '2026-02-25-09',
+        'version' => '2026-02-25-10',
         'time' => gmdate('c'),
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
@@ -136,6 +136,26 @@ if (!is_array($payload)) {
     json_response(400, ['error' => 'Invalid JSON body']);
 }
 
+$customerEmail = $payload['customer_email'] ?? null;
+if (is_string($customerEmail)) {
+    $customerEmail = trim($customerEmail);
+    if ($customerEmail === '') {
+        $customerEmail = null;
+    }
+} else {
+    $customerEmail = null;
+}
+
+$customerName = $payload['customer_name'] ?? null;
+if (is_string($customerName)) {
+    $customerName = trim($customerName);
+    if ($customerName === '') {
+        $customerName = null;
+    }
+} else {
+    $customerName = null;
+}
+
 $customerPhone = $payload['customer_phone'] ?? null;
 if (is_string($customerPhone)) {
     $customerPhone = trim($customerPhone);
@@ -144,6 +164,11 @@ if (is_string($customerPhone)) {
     }
 } else {
     $customerPhone = null;
+}
+
+$shipping = $payload['shipping'] ?? null;
+if (!is_array($shipping)) {
+    $shipping = null;
 }
 
 $items = $payload['items'] ?? null;
@@ -240,12 +265,35 @@ $params = [
     'line_items' => $lineItems,
 ];
 
-// Phone collection via Stripe Checkout caused timeouts on this hosting.
-// Alternative: create a Stripe Customer with the phone and attach it to the session.
-if (is_string($customerPhone) && $customerPhone !== '') {
+// Stripe Checkout collection for phone triggered timeouts on this hosting.
+// Alternative: create a Stripe Customer with contact/shipping and attach it to the session.
+$shouldCreateCustomer = ($customerEmail !== null) || ($customerName !== null) || ($customerPhone !== null) || ($shipping !== null);
+if ($shouldCreateCustomer) {
     $chCustomer = curl_init('https://api.stripe.com/v1/customers');
     if ($chCustomer === false) {
         json_response(500, ['error' => 'Unable to init Stripe customer request']);
+    }
+
+    $customerParams = [];
+    if (is_string($customerEmail) && $customerEmail !== '') {
+        $customerParams['email'] = $customerEmail;
+    }
+    if (is_string($customerName) && $customerName !== '') {
+        $customerParams['name'] = $customerName;
+    }
+    if (is_string($customerPhone) && $customerPhone !== '') {
+        $customerParams['phone'] = $customerPhone;
+    }
+
+    if (is_array($shipping)) {
+        $shipName = $shipping['name'] ?? null;
+        $shipAddr = $shipping['address'] ?? null;
+        if (is_string($shipName) && trim($shipName) !== '' && is_array($shipAddr)) {
+            $customerParams['shipping'] = [
+                'name' => trim($shipName),
+                'address' => $shipAddr,
+            ];
+        }
     }
 
     curl_setopt_array($chCustomer, [
@@ -260,9 +308,7 @@ if (is_string($customerPhone) && $customerPhone !== '') {
             'Content-Type: application/x-www-form-urlencoded',
             'Expect:',
         ],
-        CURLOPT_POSTFIELDS => http_build_query([
-            'phone' => $customerPhone,
-        ]),
+        CURLOPT_POSTFIELDS => http_build_query($customerParams),
     ]);
 
     if (defined('CURL_HTTP_VERSION_1_1')) {

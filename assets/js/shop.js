@@ -355,14 +355,32 @@ async function checkout(buttonEl) {
 
   const cart = loadCart();
 
+  const emailInput = document.getElementById("checkoutEmail");
+  const nameInput = document.getElementById("checkoutName");
   const phoneInput = document.getElementById("checkoutPhone");
+  const address1Input = document.getElementById("checkoutAddress1");
+  const address2Input = document.getElementById("checkoutAddress2");
+  const postalInput = document.getElementById("checkoutPostal");
+  const cityInput = document.getElementById("checkoutCity");
+
+  const email = emailInput && typeof emailInput.value === "string" ? emailInput.value.trim() : "";
+  const fullName = nameInput && typeof nameInput.value === "string" ? nameInput.value.trim() : "";
   const phone = phoneInput && typeof phoneInput.value === "string" ? phoneInput.value.trim() : "";
-  if (phoneInput) {
-    try {
-      localStorage.setItem("checkout_phone", phone);
-    } catch {
-      // ignore
-    }
+  const address1 = address1Input && typeof address1Input.value === "string" ? address1Input.value.trim() : "";
+  const address2 = address2Input && typeof address2Input.value === "string" ? address2Input.value.trim() : "";
+  const postal = postalInput && typeof postalInput.value === "string" ? postalInput.value.trim() : "";
+  const city = cityInput && typeof cityInput.value === "string" ? cityInput.value.trim() : "";
+
+  try {
+    if (emailInput) localStorage.setItem("checkout_email", email);
+    if (nameInput) localStorage.setItem("checkout_name", fullName);
+    if (phoneInput) localStorage.setItem("checkout_phone", phone);
+    if (address1Input) localStorage.setItem("checkout_address1", address1);
+    if (address2Input) localStorage.setItem("checkout_address2", address2);
+    if (postalInput) localStorage.setItem("checkout_postal", postal);
+    if (cityInput) localStorage.setItem("checkout_city", city);
+  } catch {
+    // ignore
   }
 
   if (!Array.isArray(cart) || cart.length === 0) {
@@ -374,6 +392,24 @@ async function checkout(buttonEl) {
     return;
   }
 
+  if (emailInput && !email) {
+    alert("Merci d’indiquer un e-mail.");
+    if (btn) {
+      btn.disabled = false;
+      if (originalLabel != null) btn.textContent = originalLabel;
+    }
+    emailInput.focus();
+    return;
+  }
+  if (nameInput && !fullName) {
+    alert("Merci d’indiquer votre nom.");
+    if (btn) {
+      btn.disabled = false;
+      if (originalLabel != null) btn.textContent = originalLabel;
+    }
+    nameInput.focus();
+    return;
+  }
   if (phoneInput && !phone) {
     alert("Merci d’indiquer un téléphone.");
     if (btn) {
@@ -381,6 +417,33 @@ async function checkout(buttonEl) {
       if (originalLabel != null) btn.textContent = originalLabel;
     }
     phoneInput.focus();
+    return;
+  }
+  if (address1Input && !address1) {
+    alert("Merci d’indiquer votre adresse.");
+    if (btn) {
+      btn.disabled = false;
+      if (originalLabel != null) btn.textContent = originalLabel;
+    }
+    address1Input.focus();
+    return;
+  }
+  if (postalInput && !postal) {
+    alert("Merci d’indiquer votre code postal.");
+    if (btn) {
+      btn.disabled = false;
+      if (originalLabel != null) btn.textContent = originalLabel;
+    }
+    postalInput.focus();
+    return;
+  }
+  if (cityInput && !city) {
+    alert("Merci d’indiquer votre ville.");
+    if (btn) {
+      btn.disabled = false;
+      if (originalLabel != null) btn.textContent = originalLabel;
+    }
+    cityInput.focus();
     return;
   }
 
@@ -429,7 +492,22 @@ async function checkout(buttonEl) {
     const res = await fetch("/server/checkout.php?ship=1", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items, customer_phone: phone || undefined }),
+      body: JSON.stringify({
+        items,
+        customer_phone: phone || undefined,
+        customer_email: email || undefined,
+        customer_name: fullName || undefined,
+        shipping: {
+          name: fullName,
+          address: {
+            line1: address1,
+            line2: address2 || undefined,
+            postal_code: postal,
+            city: city,
+            country: "FR"
+          }
+        }
+      }),
       signal: controller ? controller.signal : undefined
     });
 
@@ -461,12 +539,43 @@ async function checkout(buttonEl) {
 // Expose pour les boutons HTML (onclick)
 window.checkout = checkout;
 
-// Prefill phone input (if present)
+// Prefill checkout inputs (if present)
 try {
+  const emailInput = document.getElementById("checkoutEmail");
+  const nameInput = document.getElementById("checkoutName");
   const phoneInput = document.getElementById("checkoutPhone");
+  const address1Input = document.getElementById("checkoutAddress1");
+  const address2Input = document.getElementById("checkoutAddress2");
+  const postalInput = document.getElementById("checkoutPostal");
+  const cityInput = document.getElementById("checkoutCity");
+
+  if (emailInput && !emailInput.value) {
+    const saved = localStorage.getItem("checkout_email");
+    if (saved) emailInput.value = saved;
+  }
+  if (nameInput && !nameInput.value) {
+    const saved = localStorage.getItem("checkout_name");
+    if (saved) nameInput.value = saved;
+  }
   if (phoneInput && !phoneInput.value) {
     const saved = localStorage.getItem("checkout_phone");
     if (saved) phoneInput.value = saved;
+  }
+  if (address1Input && !address1Input.value) {
+    const saved = localStorage.getItem("checkout_address1");
+    if (saved) address1Input.value = saved;
+  }
+  if (address2Input && !address2Input.value) {
+    const saved = localStorage.getItem("checkout_address2");
+    if (saved) address2Input.value = saved;
+  }
+  if (postalInput && !postalInput.value) {
+    const saved = localStorage.getItem("checkout_postal");
+    if (saved) postalInput.value = saved;
+  }
+  if (cityInput && !cityInput.value) {
+    const saved = localStorage.getItem("checkout_city");
+    if (saved) cityInput.value = saved;
   }
 } catch {
   // ignore
