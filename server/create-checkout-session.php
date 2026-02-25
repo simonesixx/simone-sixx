@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-header('X-Simone-Stripe: 2026-02-25-05');
+header('X-Simone-Stripe: 2026-02-25-06');
 
 // Quick deployment/route check that should always return immediately.
 // Use: GET /server/create-checkout-session.php?probe=1
@@ -17,7 +17,7 @@ if (($_GET['probe'] ?? null) === '1') {
         'ok' => true,
         'probe' => true,
         'service' => 'simonesixx-stripe',
-        'version' => '2026-02-25-05',
+        'version' => '2026-02-25-06',
         'time' => gmdate('c'),
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
@@ -151,9 +151,10 @@ if ($secretKey === '') {
 // Use: POST /server/create-checkout-session.php?dryrun=1
 $dryrun = ($_GET['dryrun'] ?? null) === '1';
 
-// Minimal mode to isolate issues: removes optional Checkout params.
-// Use: POST /server/create-checkout-session.php?minimal=1
-$minimal = ($_GET['minimal'] ?? null) === '1';
+// Minimal mode to ensure reliability: only uses required Checkout params.
+// Default is minimal; enable full features with: ?full=1
+$full = ($_GET['full'] ?? null) === '1';
+$minimal = ($_GET['minimal'] ?? null) === '1' ? true : !$full;
 
 $allowedPriceIds = $config['allowed_price_ids'] ?? [];
 $hasAllowlist = is_array($allowedPriceIds) && count($allowedPriceIds) > 0;
