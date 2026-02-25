@@ -234,13 +234,20 @@ curl_setopt_array($ch, [
     CURLOPT_POSTFIELDS => http_build_query($params),
 ]);
 
+$start = microtime(true);
 $response = curl_exec($ch);
+$durationMs = (int)round((microtime(true) - $start) * 1000);
 $curlErr = curl_error($ch);
 $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 if ($response === false) {
-    json_response(502, ['error' => 'Stripe request failed', 'details' => $curlErr]);
+    json_response(502, [
+        'error' => 'Stripe request failed',
+        'details' => $curlErr,
+        'http_code' => $httpCode,
+        'duration_ms' => $durationMs,
+    ]);
 }
 
 $data = json_decode($response, true);
@@ -250,12 +257,24 @@ if (!is_array($data)) {
 
 if ($httpCode < 200 || $httpCode >= 300) {
     $msg = $data['error']['message'] ?? 'Stripe error';
-    json_response(502, ['error' => $msg]);
+    json_response(502, [
+        'error' => $msg,
+        'stripe_type' => $data['error']['type'] ?? null,
+        'stripe_code' => $data['error']['code'] ?? null,
+        'http_code' => $httpCode,
+        'duration_ms' => $durationMs,
+        'response_sample' => substr($response, 0, 250),
+    ]);
 }
 
 $url = $data['url'] ?? null;
 if (!is_string($url) || $url === '') {
-    json_response(502, ['error' => 'Stripe did not return a checkout URL']);
+    json_response(502, [
+        'error' => 'Stripe did not return a checkout URL',
+        'http_code' => $httpCode,
+        'duration_ms' => $durationMs,
+        'response_sample' => substr($response, 0, 250),
+    ]);
 }
 
-json_response(200, ['url' => $url]);
+json_response(200, ['url' => $url, 'duration_ms' => $durationMs]);
