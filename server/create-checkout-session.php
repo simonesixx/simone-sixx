@@ -223,6 +223,13 @@ if ($secretKey === '') {
     json_response(500, ['error' => 'Stripe is not configured (missing STRIPE secret key)']);
 }
 
+$stripeMode = 'unknown';
+if (str_starts_with($secretKey, 'sk_test_')) {
+    $stripeMode = 'test';
+} elseif (str_starts_with($secretKey, 'sk_live_')) {
+    $stripeMode = 'live';
+}
+
 // Debug: dry-run to validate request/config/line_items without calling Stripe.
 // Use: POST /server/create-checkout-session.php?dryrun=1
 $dryrun = ($_GET['dryrun'] ?? null) === '1';
@@ -282,6 +289,18 @@ foreach ($items as $item) {
 if (count($lineItems) === 0) {
     json_response(400, ['error' => 'No valid items']);
 }
+
+append_checkout_log([
+    'req_id' => $reqId,
+    'stage' => 'items',
+    'stripe_mode' => $stripeMode,
+    'line_items' => array_map(function ($li) {
+        return [
+            'price' => is_array($li) ? ($li['price'] ?? null) : null,
+            'quantity' => is_array($li) ? ($li['quantity'] ?? null) : null,
+        ];
+    }, $lineItems),
+]);
 
 if ($dryrun) {
     append_checkout_log(['req_id' => $reqId, 'stage' => 'dryrun_ok', 'duration_ms' => (int)round((microtime(true) - $t0) * 1000)]);
@@ -483,6 +502,8 @@ if ($httpCode < 200 || $httpCode >= 300) {
         'http_code' => $httpCode,
         'stripe_type' => $data['error']['type'] ?? null,
         'stripe_code' => $data['error']['code'] ?? null,
+        'stripe_param' => $data['error']['param'] ?? null,
+        'stripe_message' => $msg,
         'duration_ms' => $durationMs,
     ]);
     json_response(502, [

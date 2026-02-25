@@ -524,9 +524,19 @@ async function checkout(buttonEl) {
 
     if (timeoutId) clearTimeout(timeoutId);
 
-    const data = await res.json().catch(() => ({}));
+    let data = {};
+    let text = "";
+    try {
+      text = await res.text();
+      data = text ? (JSON.parse(text) || {}) : {};
+    } catch {
+      data = {};
+    }
     if (!res.ok) {
-      throw new Error(data && data.error ? data.error : "Erreur lors de la création du paiement.");
+      const serverMsg = data && data.error ? String(data.error) : "";
+      const snippet = !serverMsg && text ? String(text).slice(0, 160) : "";
+      const detail = serverMsg || snippet;
+      throw new Error(detail ? `Erreur paiement (${res.status}) : ${detail}` : `Erreur lors de la création du paiement (${res.status}).`);
     }
 
     if (!data || !data.url) {
