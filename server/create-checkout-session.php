@@ -2,8 +2,26 @@
 
 declare(strict_types=1);
 
+// Avoid long/hanging requests.
+@set_time_limit(25);
+
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
+
+// Return JSON even on fatal errors (helps debugging on shared hosting).
+register_shutdown_function(function (): void {
+    $error = error_get_last();
+    if ($error === null) return;
+    $fatalTypes = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR];
+    if (!in_array($error['type'] ?? 0, $fatalTypes, true)) return;
+    if (headers_sent()) return;
+
+    http_response_code(500);
+    echo json_encode([
+        'error' => 'Server error (fatal)',
+        'details' => $error['message'] ?? null,
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+});
 
 function json_response(int $status, array $payload): void {
     http_response_code($status);
@@ -61,6 +79,10 @@ function get_site_origin(): string {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(405, ['error' => 'Method not allowed']);
+}
+
+if (!function_exists('curl_init')) {
+    json_response(500, ['error' => 'Server is missing PHP cURL extension (required for Stripe).']);
 }
 
 $raw = file_get_contents('php://input');
@@ -164,6 +186,10 @@ if ($ch === false) {
 curl_setopt_array($ch, [
     CURLOPT_POST => true,
     CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_CONNECTTIMEOUT => 10,
+    CURLOPT_TIMEOUT => 20,
+    // Some shared hosts have IPv6 DNS/routing issues; prefer IPv4.
+    CURLOPT_IPRESOLVE => defined('CURL_IPRESOLVE_V4') ? CURL_IPRESOLVE_V4 : 0,
     CURLOPT_HTTPHEADER => [
         'Authorization: Bearer ' . $secretKey,
         'Content-Type: application/x-www-form-urlencoded',
