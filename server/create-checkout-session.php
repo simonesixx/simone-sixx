@@ -7,7 +7,8 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-header('X-Simone-Stripe: 2026-02-25-11');
+define('SIMONE_STRIPE_VERSION', '2026-02-25-12');
+header('X-Simone-Stripe: ' . SIMONE_STRIPE_VERSION);
 
 function append_checkout_log(array $row): void {
     $dir = __DIR__ . '/orders';
@@ -16,6 +17,9 @@ function append_checkout_log(array $row): void {
     }
     $path = $dir . '/checkout-log.jsonl';
     $row['ts'] = gmdate('c');
+    if (!isset($row['version'])) {
+        $row['version'] = defined('SIMONE_STRIPE_VERSION') ? SIMONE_STRIPE_VERSION : null;
+    }
     $line = json_encode($row, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     if (is_string($line)) {
         @file_put_contents($path, $line . "\n", FILE_APPEND | LOCK_EX);
@@ -30,7 +34,7 @@ if (($_GET['probe'] ?? null) === '1') {
         'ok' => true,
         'probe' => true,
         'service' => 'simonesixx-stripe',
-        'version' => '2026-02-25-11',
+        'version' => defined('SIMONE_STRIPE_VERSION') ? SIMONE_STRIPE_VERSION : null,
         'time' => gmdate('c'),
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
@@ -230,6 +234,20 @@ if (str_starts_with($secretKey, 'sk_test_')) {
     $stripeMode = 'live';
 }
 
+$secretPrefix = null;
+if (is_string($secretKey) && $secretKey !== '') {
+    $secretPrefix = substr($secretKey, 0, 8);
+}
+
+// Known mappings for the current catalog (parfum 30ml/50ml).
+// This avoids common misconfig (using test key with live Price IDs, or the reverse).
+$liveToTestPriceId = [
+    // live => test
+    'price_1T4Ypg1pW7akGXOM8wnRfRar' => 'price_1T4LB60XZVE1puxSTKgblJPz', // 30 ml
+    'price_1T4Yph1pW7akGXOM9qTPSGtH' => 'price_1T4Vko0XZVE1puxSJUSVeBjD', // 50 ml
+];
+$testToLivePriceId = array_flip($liveToTestPriceId);
+
 // Debug: dry-run to validate request/config/line_items without calling Stripe.
 // Use: POST /server/create-checkout-session.php?dryrun=1
 $dryrun = ($_GET['dryrun'] ?? null) === '1';
@@ -259,6 +277,7 @@ if ($hasAllowlist) {
 }
 
 $lineItems = [];
+$lineItemsBeforeTranslation = [];
 foreach ($items as $item) {
     if (!is_array($item)) continue;
 
@@ -270,6 +289,19 @@ foreach ($items as $item) {
     }
 
     $price = trim($price);
+
+    $lineItemsBeforeTranslation[] = [
+        'price' => $price,
+        'quantity' => (int)($qty ?? 1),
+    ];
+
+    // Translate Price IDs to match the configured Stripe mode.
+    if ($stripeMode === 'test' && isset($liveToTestPriceId[$price])) {
+        $price = $liveToTestPriceId[$price];
+    } elseif ($stripeMode === 'live' && isset($testToLivePriceId[$price])) {
+        $price = $testToLivePriceId[$price];
+    }
+
     $qty = (int)$qty;
 
     if ($qty < 1 || $qty > 20) {
@@ -294,6 +326,8 @@ append_checkout_log([
     'req_id' => $reqId,
     'stage' => 'items',
     'stripe_mode' => $stripeMode,
+    'secret_prefix' => $secretPrefix,
+    'line_items_before' => $lineItemsBeforeTranslation,
     'line_items' => array_map(function ($li) {
         return [
             'price' => is_array($li) ? ($li['price'] ?? null) : null,

@@ -450,9 +450,9 @@ async function checkout(buttonEl) {
   // On attend des items avec `stripePriceId` (Price ID Stripe) pour chaque ligne.
   // Ex: price_123...
   const legacyPriceIdMap = new Map([
-    // Anciennes valeurs (test) → nouvelles valeurs (test)
-    ["price_1T4LB60XZVE1puxSTKgblJPz", "price_1T4Ypg1pW7akGXOM8wnRfRar"], // 30 ml
-    ["price_1T4Vko0XZVE1puxSJUSVeBjD", "price_1T4Yph1pW7akGXOM9qTPSGtH"]  // 50 ml
+    // Live → Test (si un ancien panier a été créé en live)
+    ["price_1T4Ypg1pW7akGXOM8wnRfRar", "price_1T4LB60XZVE1puxSTKgblJPz"], // 30 ml
+    ["price_1T4Yph1pW7akGXOM9qTPSGtH", "price_1T4Vko0XZVE1puxSJUSVeBjD"], // 50 ml
   ]);
 
   const countsByPriceId = new Map();
@@ -472,9 +472,9 @@ async function checkout(buttonEl) {
 
       if (name.includes("la chambre du sixième étage") || name.includes("la chambre du sixieme etage")) {
         if (format === "30 ml" || format === "30ml") {
-          priceId = "price_1T4Ypg1pW7akGXOM8wnRfRar";
+          priceId = "price_1T4LB60XZVE1puxSTKgblJPz";
         } else if (format === "50 ml" || format === "50ml") {
-          priceId = "price_1T4Yph1pW7akGXOM9qTPSGtH";
+          priceId = "price_1T4Vko0XZVE1puxSJUSVeBjD";
         }
       }
     }
