@@ -4,6 +4,11 @@
 // This file is a sample and safe to commit.
 
 return [
+    // Optional: canonical site origin (used for Checkout success/cancel URLs)
+    // If your hosting sometimes resolves to another host, set this.
+    // Example: 'https://simonesixx.com'
+    // 'site_origin' => 'https://simonesixx.com',
+
     // Required (Secret key): sk_live_... or sk_test_...
     'stripe_secret_key' => 'sk_test_REPLACE_ME',
 

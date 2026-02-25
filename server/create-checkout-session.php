@@ -105,7 +105,23 @@ function load_config(): array {
     return $default;
 }
 
-function get_site_origin(): string {
+function get_site_origin(array $config): string {
+    // Optional override: set a canonical origin so redirects always use the correct domain.
+    // Prefer config, then env. Example: https://simonesixx.com
+    $override = $config['site_origin'] ?? null;
+    if (!is_string($override) || trim($override) === '') {
+        $override = getenv('STRIPE_SITE_ORIGIN');
+    }
+    if (!is_string($override) || trim($override) === '') {
+        $override = getenv('SITE_ORIGIN');
+    }
+    if (is_string($override) && trim($override) !== '') {
+        $o = rtrim(trim($override), '/');
+        if (preg_match('/^https?:\/\//i', $o)) {
+            return $o;
+        }
+    }
+
     $host = $_SERVER['HTTP_HOST'] ?? '';
 
     // Respect common reverse-proxy headers (cPanel/OpenResty).
@@ -254,7 +270,7 @@ if ($dryrun) {
     ]);
 }
 
-$origin = get_site_origin();
+$origin = get_site_origin($config);
 $successUrl = $origin . '/panier/?success=1&session_id={CHECKOUT_SESSION_ID}';
 $cancelUrl = $origin . '/panier/?canceled=1';
 
