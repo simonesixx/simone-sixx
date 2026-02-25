@@ -653,13 +653,29 @@ body.home .site-footer {
 
 .cart-page {
   padding: 80px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.cart-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  gap: 80px;
+  align-items: start;
+}
+
+.cart-left,
+.cart-right {
+  min-width: 0;
 }
 
 .cart-item {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr auto;
-  padding: 20px 0;
-  border-bottom: 1px solid #ddd;
+  gap: 22px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  align-items: center;
 }
 
 .banner,
@@ -697,9 +713,30 @@ body.home .site-footer {
 .cart-item {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr auto;
-  padding: 20px 0;
-  border-bottom: 1px solid #ddd;
-  font-size: 14px;
+  gap: 22px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  align-items: center;
+  font-size: 13px;
+}
+
+.cart-item-name {
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+}
+
+.cart-item-format {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.cart-item-price {
+  font-size: 13px;
+  opacity: 0.8;
+  text-align: right;
 }
 
 .cart-item button {
@@ -707,6 +744,16 @@ body.home .site-footer {
   border: none;
   border-bottom: 1px solid black;
   cursor: pointer;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 6px 0;
+  opacity: 0.5;
+  white-space: nowrap;
+}
+
+.cart-item button:hover {
+  opacity: 1;
 }
 
 .cart-footer {
@@ -714,15 +761,33 @@ body.home .site-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 24px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding-top: 0;
+  border-top: none;
+}
+
+.cart-footer p {
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.cart-footer p span {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.cart-footer .add-to-cart {
+  margin-top: 0;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 10px 0;
 }
 
 .checkout-contact {
-  margin-top: 40px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  max-width: 520px;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  max-width: none;
 }
 
 .checkout-contact label {
@@ -760,8 +825,16 @@ body.home .site-footer {
 }
 
 @media (max-width: 768px) {
+  .cart-layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
   .checkout-contact {
     max-width: none;
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
   }
 }
 
@@ -3154,9 +3227,10 @@ header {
   /* ARTICLE PANIER (injecté par JS) */
   .cart-item {
     display: grid;
-    grid-template-columns: 2fr 1fr auto;
-    gap: 16px;
-    align-items: center;
+    grid-template-columns: 1fr auto;
+    column-gap: 16px;
+    row-gap: 6px;
+    align-items: start;
 
     padding: 18px 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
@@ -3167,24 +3241,31 @@ header {
     font-size: 13px;
     letter-spacing: 0.5px;
     line-height: 1.4;
+    grid-column: 1;
+    grid-row: 1;
   }
 
-  .cart-item-details {
+  .cart-item-format {
     font-size: 11px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
     opacity: 0.5;
-    margin-top: 4px;
+    margin-top: 0;
+    grid-column: 1;
+    grid-row: 2;
   }
 
   .cart-item-price {
     font-size: 13px;
     opacity: 0.8;
     text-align: right;
+    grid-column: 2;
+    grid-row: 1;
   }
 
   .cart-item button {
-    align-self: center;
+    align-self: end;
+    justify-self: end;
     background: none;
     border: none;
     border-bottom: 1px solid black;
@@ -3195,6 +3276,8 @@ header {
     cursor: pointer;
     opacity: 0.5;
     white-space: nowrap;
+    grid-column: 2;
+    grid-row: 2;
   }
 
   .cart-item button:hover {

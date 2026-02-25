@@ -315,10 +315,10 @@ function renderCart() {
     const div = document.createElement("div");
     div.className = "cart-item";
     div.innerHTML = `
-      <p>${item.name}</p>
-      <p>${item.size || item.format}</p>
-      <p>${formatEUR(item.price)}</p>
-      <button onclick="removeItem(${index})">Supprimer</button>
+      <p class="cart-item-name">${item.name}</p>
+      <p class="cart-item-format">${item.size || item.format || ""}</p>
+      <p class="cart-item-price">${formatEUR(item.price)}</p>
+      <button type="button" onclick="removeItem(${index})">Supprimer</button>
     `;
 
     cartContainer.appendChild(div);

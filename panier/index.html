@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="assets/css/style.css?v=20260225-1">
 
   <!-- JS -->
-  <script src="assets/js/shop.js?v=20260225-12" defer></script>
+  <script src="assets/js/shop.js?v=20260225-13" defer></script>
   <script src="assets/js/newsletter.js" defer></script>
 
 </head>
@@ -93,32 +93,38 @@
 
   <h1>Panier</h1>
 
-  <div id="cartItems"></div>
+  <div class="cart-layout">
+    <section class="cart-left" aria-label="Articles du panier">
+      <div id="cartItems"></div>
+    </section>
 
-  <div class="checkout-contact">
-    <label for="checkoutEmail">E-mail</label>
-    <input id="checkoutEmail" type="email" inputmode="email" autocomplete="email" placeholder="email@exemple.com" required>
+    <aside class="cart-right" aria-label="Informations client">
+      <div class="checkout-contact">
+        <label for="checkoutEmail">E-mail</label>
+        <input id="checkoutEmail" type="email" inputmode="email" autocomplete="email" placeholder="email@exemple.com" required>
 
-    <label for="checkoutName">Nom complet</label>
-    <input id="checkoutName" type="text" autocomplete="name" placeholder="Nom Prénom" required>
+        <label for="checkoutName">Nom complet</label>
+        <input id="checkoutName" type="text" autocomplete="name" placeholder="Nom Prénom" required>
 
-    <label for="checkoutPhone">Téléphone</label>
-    <input id="checkoutPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="06…" required>
+        <label for="checkoutPhone">Téléphone</label>
+        <input id="checkoutPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="06…" required>
 
-    <label for="checkoutAddress1">Adresse</label>
-    <input id="checkoutAddress1" type="text" autocomplete="shipping address-line1" placeholder="Ligne d’adresse n°1" required>
-    <input id="checkoutAddress2" type="text" autocomplete="shipping address-line2" placeholder="Ligne d’adresse n°2 (optionnel)">
+        <label for="checkoutAddress1">Adresse</label>
+        <input id="checkoutAddress1" type="text" autocomplete="shipping address-line1" placeholder="Ligne d’adresse n°1" required>
+        <input id="checkoutAddress2" type="text" autocomplete="shipping address-line2" placeholder="Ligne d’adresse n°2 (optionnel)">
 
-    <div class="checkout-contact-row">
-      <div>
-        <label for="checkoutPostal">Code postal</label>
-        <input id="checkoutPostal" type="text" inputmode="numeric" autocomplete="shipping postal-code" placeholder="75000" required>
+        <div class="checkout-contact-row">
+          <div>
+            <label for="checkoutPostal">Code postal</label>
+            <input id="checkoutPostal" type="text" inputmode="numeric" autocomplete="shipping postal-code" placeholder="75000" required>
+          </div>
+          <div>
+            <label for="checkoutCity">Ville</label>
+            <input id="checkoutCity" type="text" autocomplete="shipping address-level2" placeholder="Paris" required>
+          </div>
+        </div>
       </div>
-      <div>
-        <label for="checkoutCity">Ville</label>
-        <input id="checkoutCity" type="text" autocomplete="shipping address-level2" placeholder="Paris" required>
-      </div>
-    </div>
+    </aside>
   </div>
 
   <div class="cart-footer">
