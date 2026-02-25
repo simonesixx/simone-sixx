@@ -355,12 +355,32 @@ async function checkout(buttonEl) {
 
   const cart = loadCart();
 
+  const phoneInput = document.getElementById("checkoutPhone");
+  const phone = phoneInput && typeof phoneInput.value === "string" ? phoneInput.value.trim() : "";
+  if (phoneInput) {
+    try {
+      localStorage.setItem("checkout_phone", phone);
+    } catch {
+      // ignore
+    }
+  }
+
   if (!Array.isArray(cart) || cart.length === 0) {
     alert("Votre panier est vide.");
     if (btn) {
       btn.disabled = false;
       if (originalLabel != null) btn.textContent = originalLabel;
     }
+    return;
+  }
+
+  if (phoneInput && !phone) {
+    alert("Merci d’indiquer un téléphone.");
+    if (btn) {
+      btn.disabled = false;
+      if (originalLabel != null) btn.textContent = originalLabel;
+    }
+    phoneInput.focus();
     return;
   }
 
@@ -409,7 +429,7 @@ async function checkout(buttonEl) {
     const res = await fetch("/server/checkout.php?ship=1", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items }),
+      body: JSON.stringify({ items, customer_phone: phone || undefined }),
       signal: controller ? controller.signal : undefined
     });
 
@@ -440,6 +460,17 @@ async function checkout(buttonEl) {
 
 // Expose pour les boutons HTML (onclick)
 window.checkout = checkout;
+
+// Prefill phone input (if present)
+try {
+  const phoneInput = document.getElementById("checkoutPhone");
+  if (phoneInput && !phoneInput.value) {
+    const saved = localStorage.getItem("checkout_phone");
+    if (saved) phoneInput.value = saved;
+  }
+} catch {
+  // ignore
+}
 
 // Retour de Stripe (success/cancel)
 try {

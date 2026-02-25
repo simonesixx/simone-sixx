@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-header('X-Simone-Stripe: 2026-02-25-08');
+header('X-Simone-Stripe: 2026-02-25-09');
 
 // Quick deployment/route check that should always return immediately.
 // Use: GET /server/create-checkout-session.php?probe=1
@@ -17,7 +17,7 @@ if (($_GET['probe'] ?? null) === '1') {
         'ok' => true,
         'probe' => true,
         'service' => 'simonesixx-stripe',
-        'version' => '2026-02-25-08',
+        'version' => '2026-02-25-09',
         'time' => gmdate('c'),
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
@@ -136,6 +136,16 @@ if (!is_array($payload)) {
     json_response(400, ['error' => 'Invalid JSON body']);
 }
 
+$customerPhone = $payload['customer_phone'] ?? null;
+if (is_string($customerPhone)) {
+    $customerPhone = trim($customerPhone);
+    if ($customerPhone === '') {
+        $customerPhone = null;
+    }
+} else {
+    $customerPhone = null;
+}
+
 $items = $payload['items'] ?? null;
 if (!is_array($items) || count($items) === 0) {
     json_response(400, ['error' => 'Cart is empty']);
@@ -230,6 +240,66 @@ $params = [
     'line_items' => $lineItems,
 ];
 
+// Phone collection via Stripe Checkout caused timeouts on this hosting.
+// Alternative: create a Stripe Customer with the phone and attach it to the session.
+if (is_string($customerPhone) && $customerPhone !== '') {
+    $chCustomer = curl_init('https://api.stripe.com/v1/customers');
+    if ($chCustomer === false) {
+        json_response(500, ['error' => 'Unable to init Stripe customer request']);
+    }
+
+    curl_setopt_array($chCustomer, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_NOSIGNAL => 1,
+        CURLOPT_CONNECTTIMEOUT => 2,
+        CURLOPT_TIMEOUT => 4,
+        CURLOPT_IPRESOLVE => defined('CURL_IPRESOLVE_V4') ? CURL_IPRESOLVE_V4 : 0,
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Bearer ' . $secretKey,
+            'Content-Type: application/x-www-form-urlencoded',
+            'Expect:',
+        ],
+        CURLOPT_POSTFIELDS => http_build_query([
+            'phone' => $customerPhone,
+        ]),
+    ]);
+
+    if (defined('CURL_HTTP_VERSION_1_1')) {
+        curl_setopt($chCustomer, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+    }
+
+    $respCustomer = curl_exec($chCustomer);
+    $custErr = curl_error($chCustomer);
+    $custErrNo = function_exists('curl_errno') ? curl_errno($chCustomer) : null;
+    $custHttp = (int)curl_getinfo($chCustomer, CURLINFO_HTTP_CODE);
+    curl_close($chCustomer);
+
+    if (!is_string($respCustomer) || $respCustomer === '') {
+        json_response(502, [
+            'error' => 'Stripe customer request failed',
+            'details' => $custErr ?: null,
+            'curl_errno' => $custErrNo,
+            'http_code' => $custHttp,
+        ]);
+    }
+
+    $custData = json_decode($respCustomer, true);
+    $custId = is_array($custData) ? ($custData['id'] ?? null) : null;
+    if ($custHttp < 200 || $custHttp >= 300 || !is_string($custId) || $custId === '') {
+        $msg = is_array($custData) ? ($custData['error']['message'] ?? 'Stripe customer error') : 'Stripe customer error';
+        json_response(502, [
+            'error' => $msg,
+            'stripe_type' => is_array($custData) ? ($custData['error']['type'] ?? null) : null,
+            'stripe_code' => is_array($custData) ? ($custData['error']['code'] ?? null) : null,
+            'http_code' => $custHttp,
+            'response_sample' => substr($respCustomer, 0, 250),
+        ]);
+    }
+
+    $params['customer'] = $custId;
+}
+
 if ($ship) {
     $params['shipping_address_collection'] = [
         'allowed_countries' => $config['allowed_countries'] ?? ['FR'],
@@ -297,6 +367,7 @@ $start = microtime(true);
 $response = curl_exec($ch);
 $durationMs = (int)round((microtime(true) - $start) * 1000);
 $curlErr = curl_error($ch);
+$curlErrNo = function_exists('curl_errno') ? curl_errno($ch) : null;
 $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
@@ -304,7 +375,7 @@ if ($response === false) {
     json_response(502, [
         'error' => 'Stripe request failed',
         'details' => $curlErr,
-        'curl_errno' => function_exists('curl_errno') ? curl_errno($ch) : null,
+        'curl_errno' => $curlErrNo,
         'http_code' => $httpCode,
         'duration_ms' => $durationMs,
     ]);
