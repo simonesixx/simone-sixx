@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-header('X-Simone-Stripe: 2026-02-25-06');
+header('X-Simone-Stripe: 2026-02-25-07');
 
 // Quick deployment/route check that should always return immediately.
 // Use: GET /server/create-checkout-session.php?probe=1
@@ -17,7 +17,7 @@ if (($_GET['probe'] ?? null) === '1') {
         'ok' => true,
         'probe' => true,
         'service' => 'simonesixx-stripe',
-        'version' => '2026-02-25-06',
+        'version' => '2026-02-25-07',
         'time' => gmdate('c'),
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
@@ -156,6 +156,10 @@ $dryrun = ($_GET['dryrun'] ?? null) === '1';
 $full = ($_GET['full'] ?? null) === '1';
 $minimal = ($_GET['minimal'] ?? null) === '1' ? true : !$full;
 
+// Step-by-step enablement: collect shipping address without enabling other optional fields.
+// Use: POST /server/create-checkout-session.php?ship=1
+$ship = ($_GET['ship'] ?? null) === '1';
+
 $allowedPriceIds = $config['allowed_price_ids'] ?? [];
 $hasAllowlist = is_array($allowedPriceIds) && count($allowedPriceIds) > 0;
 $allowedLookup = [];
@@ -221,6 +225,12 @@ $params = [
     'cancel_url' => $cancelUrl,
     'line_items' => $lineItems,
 ];
+
+if ($ship) {
+    $params['shipping_address_collection'] = [
+        'allowed_countries' => $config['allowed_countries'] ?? ['FR'],
+    ];
+}
 
 if (!$minimal) {
     $params['shipping_address_collection'] = [
