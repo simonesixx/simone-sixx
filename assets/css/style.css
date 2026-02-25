@@ -714,11 +714,15 @@ body.home .site-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-top: 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .checkout-contact {
-  margin-top: 30px;
-  max-width: 420px;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  max-width: 520px;
 }
 
 .checkout-contact label {
@@ -726,7 +730,12 @@ body.home .site-footer {
   font-size: 10px;
   letter-spacing: 2px;
   text-transform: uppercase;
+  margin-top: 18px;
   margin-bottom: 10px;
+}
+
+.checkout-contact label:first-of-type {
+  margin-top: 0;
 }
 
 .checkout-contact input {
@@ -739,10 +748,15 @@ body.home .site-footer {
   outline: none;
 }
 
+.checkout-contact input::placeholder {
+  opacity: 0.45;
+}
+
 .checkout-contact-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
+  margin-top: 6px;
 }
 
 @media (max-width: 768px) {
