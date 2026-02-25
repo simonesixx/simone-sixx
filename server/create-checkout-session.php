@@ -9,6 +9,20 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 header('X-Simone-Stripe: 2026-02-25-02');
 
+// Quick deployment/route check that should always return immediately.
+// Use: GET /server/create-checkout-session.php?probe=1
+if (($_GET['probe'] ?? null) === '1') {
+    http_response_code(200);
+    echo json_encode([
+        'ok' => true,
+        'probe' => true,
+        'service' => 'simonesixx-stripe',
+        'version' => '2026-02-25-02',
+        'time' => gmdate('c'),
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // Return JSON even on fatal errors (helps debugging on shared hosting).
 register_shutdown_function(function (): void {
     $error = error_get_last();
