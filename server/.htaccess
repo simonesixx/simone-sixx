@@ -25,6 +25,11 @@ Options -Indexes
   Require all denied
 </Files>
 
+# Cron script should not be callable from the web.
+<Files "newsletter-cron.php">
+  Require all denied
+</Files>
+
 # (Optional) Restrict methods: only allow POST on the endpoint
 <IfModule mod_rewrite.c>
   RewriteEngine On
