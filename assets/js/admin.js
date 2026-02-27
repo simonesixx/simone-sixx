@@ -717,6 +717,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               <a class="edit-btn" href="articles/article.html?id=${encodeURIComponent(a.id || "")}&preview=1" target="_blank" rel="noopener noreferrer" title="Voir l’article (preview)" aria-label="Voir l’article (preview)" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
                 👁️
               </a>
+              <button class="move-btn" data-article-newsletter="${idx}" title="Envoyer au Journal" aria-label="Envoyer au Journal">✉</button>
               <button class="move-btn" data-article-move-up="${idx}" ${idx === 0 ? "disabled" : ""} title="Monter">↑</button>
               <button class="move-btn" data-article-move-down="${idx}" ${idx === list.length - 1 ? "disabled" : ""} title="Descendre">↓</button>
               <button class="edit-btn" data-article-edit="${idx}">Modifier</button>
@@ -726,6 +727,146 @@ document.addEventListener("DOMContentLoaded", async () => {
         `
       )
       .join("");
+
+    function getNewsletterToken() {
+      const KEY = "simone_newsletter_notify_token";
+      let token = "";
+      try {
+        token = String(sessionStorage.getItem(KEY) || "").trim();
+      } catch {
+        token = "";
+      }
+
+      if (token) return token;
+      const entered = prompt("Token Newsletter (admin) :");
+      if (!entered) return null;
+      token = String(entered).trim();
+      if (!token) return null;
+      try {
+        sessionStorage.setItem(KEY, token);
+      } catch {
+        // ignore
+      }
+      return token;
+    }
+
+    function clearNewsletterToken() {
+      try {
+        sessionStorage.removeItem("simone_newsletter_notify_token");
+      } catch {
+        // ignore
+      }
+    }
+
+    function buildArticleUrl(articleId) {
+      try {
+        const url = new URL("articles/article.html", document.baseURI);
+        url.searchParams.set("id", String(articleId || ""));
+        return url.toString();
+      } catch {
+        return `articles/article.html?id=${encodeURIComponent(String(articleId || ""))}`;
+      }
+    }
+
+    async function notifyNewsletterForArticle(article, buttonEl, opts = {}) {
+      if (!article || !article.id || !article.title) {
+        alert("Article invalide (id/titre manquant). ");
+        return;
+      }
+
+      const force = opts && opts.force === true;
+      const proceed = confirm(`${force ? "FORCER RENVOI — " : ""}Envoyer cet article au Journal ?\n\n${article.title}`);
+      if (!proceed) return;
+
+      const token = getNewsletterToken();
+      if (!token) {
+        alert("Token manquant. Envoi annulé.");
+        return;
+      }
+
+      const endpoint = "server/newsletter-article-notify.php";
+      const payload = {
+        article: {
+          id: String(article.id || "").trim(),
+          title: String(article.title || "").trim(),
+          date: String(article.date || "").trim(),
+          excerpt: String(article.excerpt || "").trim(),
+          image: String(article.image || "").trim(),
+        },
+        url: buildArticleUrl(article.id),
+        force: force ? 1 : 0,
+      };
+
+      const btn = buttonEl && typeof buttonEl === "object" ? buttonEl : null;
+      const originalText = btn ? String(btn.textContent || "") : null;
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "…";
+      }
+
+      let safety = 0;
+      try {
+        while (safety < 200) {
+          safety += 1;
+
+          let res;
+          try {
+            res = await fetch(endpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Newsletter-Token": token,
+              },
+              body: JSON.stringify(payload),
+            });
+          } catch {
+            throw new Error("Impossible de contacter le serveur.");
+          }
+
+          let data = null;
+          try {
+            data = await res.json();
+          } catch {
+            data = null;
+          }
+
+          if (res.status === 403) {
+            clearNewsletterToken();
+            throw new Error("Token invalide (403). Token effacé de la session.");
+          }
+
+          if (!res.ok || !data || data.ok !== true) {
+            const msg = data && data.error ? String(data.error) : `Erreur serveur (${res.status}).`;
+            throw new Error(msg);
+          }
+
+          const sentTotal = Number(data.sent_total ?? 0);
+          const total = Number(data.total ?? 0);
+          const remaining = Number(data.remaining ?? 0);
+          const done = Boolean(data.done);
+
+          if (btn) {
+            btn.textContent = done ? "✓" : `${sentTotal}/${total}`;
+          }
+
+          if (done || remaining <= 0) {
+            alert(`Journal envoyé.\n\nEnvoyés: ${sentTotal}/${total}${data.errors_total ? `\nErreurs: ${data.errors_total}` : ""}`);
+            return;
+          }
+
+          await new Promise((r) => setTimeout(r, 800));
+        }
+
+        throw new Error("Envoi interrompu (trop de lots). Réessaie.");
+      } catch (err) {
+        alert(err && err.message ? err.message : "Erreur pendant l’envoi.");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = originalText || "✉";
+        }
+      }
+    }
 
     function moveArticle(fromIndex, toIndex) {
       const arr = loadArticles();
@@ -782,6 +923,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         const index = Number(btn.getAttribute("data-article-move-down"));
         if (!Number.isFinite(index)) return;
         moveArticle(index, index + 1);
+      });
+    });
+
+    articlesAdminList.querySelectorAll("[data-article-newsletter]").forEach((btn) => {
+      btn.addEventListener("click", (ev) => {
+        const index = Number(btn.getAttribute("data-article-newsletter"));
+        if (!Number.isFinite(index)) return;
+        const arr = loadArticles();
+        const article = arr[index];
+        const force = Boolean(ev && ev.shiftKey);
+        notifyNewsletterForArticle(article, btn, { force });
       });
     });
   }
