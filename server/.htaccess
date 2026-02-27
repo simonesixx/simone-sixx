@@ -14,6 +14,17 @@ Options -Indexes
   Require all denied
 </Files>
 
+# Block access to newsletter export config/secrets (should never be readable from the web)
+<Files "newsletter-config.php">
+  Require all denied
+</Files>
+<Files "newsletter-config.sample.php">
+  Require all denied
+</Files>
+<Files "newsletter-config.local.php">
+  Require all denied
+</Files>
+
 # (Optional) Restrict methods: only allow POST on the endpoint
 <IfModule mod_rewrite.c>
   RewriteEngine On

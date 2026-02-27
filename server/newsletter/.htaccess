@@ -1,0 +1,8 @@
+# Newsletter storage hardening
+
+Options -Indexes
+
+# Never expose raw subscriber files
+<FilesMatch "\.(json|csv|jsonl)$">
+  Require all denied
+</FilesMatch>

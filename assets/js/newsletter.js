@@ -23,6 +23,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // ======================
   const KEY = "simoneNewsletter";
 
+  function endpointUrl() {
+    try {
+      return new URL("server/newsletter-subscribe.php", document.baseURI).toString();
+    } catch (_) {
+      return "server/newsletter-subscribe.php";
+    }
+  }
+
   function getEmails() {
     return JSON.parse(localStorage.getItem(KEY)) || [];
   }
@@ -59,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ======================
   // INSCRIPTION
   // ======================
-  form.addEventListener("submit", e => {
+  form.addEventListener("submit", async e => {
     e.preventDefault();
 
     if (!input) return;
@@ -71,18 +79,41 @@ document.addEventListener("DOMContentLoaded", () => {
     if (success) success.hidden = true;
     if (exists)  exists.hidden  = true;
 
-    const emails = getEmails();
+    // 1) Essai serveur (si dispo)
+    try {
+      const res = await fetch(endpointUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          source: window.location && window.location.pathname ? window.location.pathname : null,
+        }),
+      });
 
-    // email déjà inscrit
+      if (res.status === 409) {
+        if (exists) exists.hidden = false;
+        return;
+      }
+
+      if (res.ok) {
+        if (success) success.hidden = false;
+        input.value = "";
+        return;
+      }
+      // Sinon on tente le fallback local.
+    } catch (_) {
+      // Serveur indispo (ou hébergement statique) → fallback local.
+    }
+
+    // 2) Fallback localStorage (mode statique/offline)
+    const emails = getEmails();
     if (emails.includes(email)) {
       if (exists) exists.hidden = false;
       return;
     }
 
-    // nouvel email
     emails.push(email);
     saveEmails(emails);
-
     if (success) success.hidden = false;
     input.value = "";
   });
