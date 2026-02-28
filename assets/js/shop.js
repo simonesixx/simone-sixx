@@ -935,6 +935,22 @@ window.checkout = checkout;
     const mrBox = document.getElementById("mrRelayBox");
     if (!mrBox) return;
 
+    const mrOptionLabel = document.getElementById("shippingOptionMondialRelay");
+    const mrOptionInput = document.getElementById("shippingMondialRelay")
+      || (mrOptionLabel ? mrOptionLabel.querySelector('input[value="mondial_relay"]') : null)
+      || document.querySelector('input[name="shippingMethod"][value="mondial_relay"]');
+    const homeOptionInput = document.querySelector('input[name="shippingMethod"][value="home"]');
+
+    function updateMrAvailability() {
+      const isFrance = getSelectedCheckoutCountry() === "FR";
+      if (mrOptionLabel) mrOptionLabel.hidden = !isFrance;
+      if (mrOptionInput) mrOptionInput.disabled = !isFrance;
+
+      if (!isFrance && mrOptionInput && mrOptionInput.checked) {
+        if (homeOptionInput) homeOptionInput.checked = true;
+      }
+    }
+
     function getCheckedMethod() {
       const el = document.querySelector('input[name="shippingMethod"]:checked');
       return el && typeof el.value === "string" ? String(el.value || "home") : "home";
@@ -948,6 +964,7 @@ window.checkout = checkout;
     }
 
     function toggleMr() {
+      updateMrAvailability();
       const method = getCheckedMethod();
       const selectedCountry = getSelectedCheckoutCountry();
       const show = method === "mondial_relay" && selectedCountry === "FR";
@@ -1144,6 +1161,7 @@ window.checkout = checkout;
           // ignore
         }
 
+        updateMrAvailability();
         toggleMr();
         try {
           const cart = loadCart();
@@ -1156,6 +1174,7 @@ window.checkout = checkout;
       });
     }
 
+    updateMrAvailability();
     toggleMr();
   } catch {
     // ignore
