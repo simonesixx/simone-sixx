@@ -81,6 +81,12 @@ function normalize_string($value): ?string {
     return $s === '' ? null : $s;
 }
 
+function format_eur_cents(int $cents): string {
+    if ($cents < 0) $cents = 0;
+    $euros = $cents / 100;
+    return number_format($euros, 2, ',', ' ') . ' EUR';
+}
+
 function compute_cart_weight_grams(array $lineItems, array $config): int {
     $weights = $config['weights_by_price_id'] ?? null;
     $defaultWeight = (int)($config['default_weight_grams'] ?? 0);
@@ -574,7 +580,20 @@ if ($shippingMethod === 'mondial_relay') {
         json_response(500, ['error' => 'Mondial Relay shipping is not configured (missing mondial_relay_rates).']);
     }
 
-    if ((int)$mrShippingCents > 0) {
+    if ($isFreeShipping) {
+        $desc = $freeShippingThresholdCents > 0 ? ('Offerte dès ' . format_eur_cents($freeShippingThresholdCents) . '.') : 'Offerte.';
+        $lineItems[] = [
+            'price_data' => [
+                'currency' => $currency,
+                'product_data' => [
+                    'name' => 'Livraison Mondial Relay (Point Relais) — offerte',
+                    'description' => $desc,
+                ],
+                'unit_amount' => 0,
+            ],
+            'quantity' => 1,
+        ];
+    } elseif ((int)$mrShippingCents > 0) {
         $lineItems[] = [
             'price_data' => [
                 'currency' => $currency,
@@ -602,7 +621,20 @@ if ($shippingMethod === 'home') {
         $homeShippingCents = 0;
     }
 
-    if ((int)$homeShippingCents > 0) {
+    if ($isFreeShipping) {
+        $desc = $freeShippingThresholdCents > 0 ? ('Offerte dès ' . format_eur_cents($freeShippingThresholdCents) . '.') : 'Offerte.';
+        $lineItems[] = [
+            'price_data' => [
+                'currency' => $currency,
+                'product_data' => [
+                    'name' => 'Livraison à domicile — offerte',
+                    'description' => $desc,
+                ],
+                'unit_amount' => 0,
+            ],
+            'quantity' => 1,
+        ];
+    } elseif ((int)$homeShippingCents > 0) {
         $lineItems[] = [
             'price_data' => [
                 'currency' => $currency,
