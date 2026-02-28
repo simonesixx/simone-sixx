@@ -64,6 +64,10 @@ return [
     // Example: 11000 means free shipping from 110.00 EUR.
     'free_shipping_threshold_eu_cents' => 11000,
 
+    // Optional: inventory reservation TTL in seconds (prevents double-selling during checkout).
+    // Default in code: 1800 (30 minutes). Minimum 60, maximum 86400.
+    // 'inventory_reservation_ttl_seconds' => 1800,
+
     // Mondial Relay shipping brackets (France only in this project).
     // First matching bracket where weight <= max_weight_grams is used.
     // amount_cents is the shipping price in cents.

@@ -967,10 +967,13 @@ if ($stripeMode === 'live') {
 
     if (count($reserveItems) > 0) {
         try {
+            $ttlSeconds = (int)($config['inventory_reservation_ttl_seconds'] ?? 1800);
+            if ($ttlSeconds < 60) $ttlSeconds = 60;
+            if ($ttlSeconds > 86400) $ttlSeconds = 86400;
             $inventoryReservationId = bin2hex(random_bytes(8));
             $locked = simone_inventory_open_locked($config);
             $inv = $locked['data'];
-            $res = simone_inventory_reserve($inv, $inventoryReservationId, $reserveItems, 7200);
+            $res = simone_inventory_reserve($inv, $inventoryReservationId, $reserveItems, $ttlSeconds);
             simone_inventory_save_and_close($locked['fh'], $locked['path'], $inv);
 
             if (!is_array($res) || empty($res['ok'])) {
