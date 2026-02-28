@@ -2801,7 +2801,7 @@ header {
     position: relative;
   }
 
-  .carousel-container {
+  .product-page .carousel-container {
     width: 100vw;
     margin-left: calc(-50vw + 50%);
     position: relative;
@@ -2828,7 +2828,7 @@ header {
      CARROUSEL MOBILE
   =============================== */
 
-  .carousel-nav {
+  .product-page .carousel-nav {
     position: absolute;
     bottom: 14px;
     right: 14px;
