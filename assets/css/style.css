@@ -659,7 +659,7 @@ body.home .site-footer {
 
 .cart-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 520px);
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 640px);
   gap: 64px;
   align-items: start;
 }
@@ -762,7 +762,7 @@ body.home .site-footer {
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 520px);
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 640px);
   gap: 64px;
   align-items: end;
 }
@@ -869,8 +869,8 @@ body.home .site-footer {
 
 .checkout-shipping-options {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 2px;
 }
 
 .checkout-shipping-option {
@@ -898,6 +898,8 @@ body.home .site-footer {
   margin-bottom: 18px;
   width: 100%;
   overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 10px;
 }
 
 /* Keep the Mondial Relay widget responsive inside our column */
@@ -926,6 +928,11 @@ body.home .site-footer {
 
   .checkout-shipping-options {
     grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .mr-widget-zone {
+    padding: 8px;
   }
 
   .cart-footer {
