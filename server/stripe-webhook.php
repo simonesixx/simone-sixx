@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/inventory.php';
+
 @set_time_limit(12);
 
 header('Cache-Control: no-store');
@@ -373,6 +375,33 @@ if (!is_array($order)) {
         'email_sent' => false,
         'email_to' => null,
         'orders_log_appended' => false,
+        'inventory' => null,
+    ];
+}
+
+// Inventory finalize (idempotent via reservation id + file locking).
+try {
+    $paymentStatus = is_string($session['payment_status'] ?? null) ? (string)$session['payment_status'] : '';
+    $isPaid = ($paymentStatus === 'paid');
+    $meta = is_array($order['metadata'] ?? null) ? $order['metadata'] : (is_array($session['metadata'] ?? null) ? $session['metadata'] : null);
+    $reservationId = is_array($meta) && is_string($meta['inventory_reservation_id'] ?? null) ? (string)$meta['inventory_reservation_id'] : '';
+
+    if ($isPaid && $reservationId !== '') {
+        $locked = simone_inventory_open_locked($config);
+        $inv = $locked['data'];
+        $res = simone_inventory_finalize_reservation($inv, $reservationId);
+        simone_inventory_save_and_close($locked['fh'], $locked['path'], $inv);
+
+        $order['inventory'] = [
+            'reservation_id' => $reservationId,
+            'finalize_result' => $res,
+            'finalized_at' => gmdate('c'),
+        ];
+    }
+} catch (Throwable $e) {
+    $order['inventory'] = [
+        'error' => $e->getMessage(),
+        'failed_at' => gmdate('c'),
     ];
 }
 

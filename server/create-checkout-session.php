@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/inventory.php';
+
 // Avoid long/hanging requests (reverse proxies may 504 first).
 @set_time_limit(12);
 
@@ -647,6 +649,9 @@ foreach ($items as $item) {
     ];
 }
 
+// Keep a copy of product line items for inventory (shipping line items may be appended later).
+$productLineItems = $lineItems;
+
 // Optional: Mondial Relay shipping line chosen on-site.
 $cartWeightGrams = null;
 $mrShippingCents = null;
@@ -852,15 +857,6 @@ if ($shippingMethod === 'home') {
     $metadata['home_shipping_cents'] = $homeShippingCents !== null ? (string)$homeShippingCents : '';
 }
 
-// Stripe expects scalar metadata values.
-$params['metadata'] = array_map(function ($v) {
-    if ($v === null) return '';
-    if (is_bool($v)) return $v ? '1' : '0';
-    if (is_scalar($v)) return (string)$v;
-    $j = json_encode($v, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-    return is_string($j) ? $j : '';
-}, $metadata);
-
 // Stripe Checkout collection for phone triggered timeouts on this hosting.
 // Alternative: create a Stripe Customer with contact/shipping and attach it to the session.
 $shouldCreateCustomer = ($customerEmail !== null) || ($customerName !== null) || ($customerPhone !== null) || ($shipping !== null);
@@ -955,6 +951,68 @@ if ($shouldCreateCustomer) {
     $params['customer'] = $custId;
 }
 
+// Inventory reservation (live mode only): prevents overselling the 30 ml variant.
+$inventoryReservationId = null;
+if ($stripeMode === 'live') {
+    $reserveItems = [];
+    foreach ($productLineItems as $li) {
+        if (!is_array($li)) continue;
+        $pid = $li['price'] ?? null;
+        $qty = $li['quantity'] ?? null;
+        if (!is_string($pid) || trim($pid) === '') continue;
+        $q = is_int($qty) ? $qty : (is_numeric($qty) ? (int)$qty : 0);
+        if ($q < 1) continue;
+        $reserveItems[$pid] = ($reserveItems[$pid] ?? 0) + $q;
+    }
+
+    if (count($reserveItems) > 0) {
+        try {
+            $inventoryReservationId = bin2hex(random_bytes(8));
+            $locked = simone_inventory_open_locked($config);
+            $inv = $locked['data'];
+            $res = simone_inventory_reserve($inv, $inventoryReservationId, $reserveItems, 7200);
+            simone_inventory_save_and_close($locked['fh'], $locked['path'], $inv);
+
+            if (!is_array($res) || empty($res['ok'])) {
+                $label = is_array($res) && isset($res['label']) ? (string)$res['label'] : 'Article';
+                $avail = is_array($res) && isset($res['available']) ? (int)$res['available'] : 0;
+                $req = is_array($res) && isset($res['requested']) ? (int)$res['requested'] : 1;
+                append_checkout_log([
+                    'req_id' => $reqId,
+                    'stage' => 'inventory_out_of_stock',
+                    'label' => $label,
+                    'available' => $avail,
+                    'requested' => $req,
+                ]);
+                json_response(409, ['error' => 'Rupture de stock : ' . $label . ' (' . $avail . ' dispo)', 'available' => $avail, 'requested' => $req]);
+            }
+
+            if (!empty($res['skipped'])) {
+                $inventoryReservationId = null;
+            } else {
+                append_checkout_log(['req_id' => $reqId, 'stage' => 'inventory_reserved', 'reservation_id' => $inventoryReservationId]);
+            }
+        } catch (Throwable $e) {
+            append_checkout_log(['req_id' => $reqId, 'stage' => 'inventory_error', 'details' => $e->getMessage()]);
+            // Fail open to avoid blocking checkout if filesystem is read-only.
+            $inventoryReservationId = null;
+        }
+    }
+}
+
+if (is_string($inventoryReservationId) && $inventoryReservationId !== '') {
+    $metadata['inventory_reservation_id'] = $inventoryReservationId;
+}
+
+// Stripe expects scalar metadata values.
+$params['metadata'] = array_map(function ($v) {
+    if ($v === null) return '';
+    if (is_bool($v)) return $v ? '1' : '0';
+    if (is_scalar($v)) return (string)$v;
+    $j = json_encode($v, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    return is_string($j) ? $j : '';
+}, $metadata);
+
 if ($phone) {
     $params['phone_number_collection'] = ['enabled' => true];
 }
@@ -972,6 +1030,16 @@ if (!$minimal && !empty($config['allow_promotion_codes'])) {
 
 $ch = curl_init('https://api.stripe.com/v1/checkout/sessions');
 if ($ch === false) {
+    if (is_string($inventoryReservationId) && $inventoryReservationId !== '') {
+        try {
+            $locked = simone_inventory_open_locked($config);
+            $inv = $locked['data'];
+            simone_inventory_cancel_reservation($inv, $inventoryReservationId);
+            simone_inventory_save_and_close($locked['fh'], $locked['path'], $inv);
+        } catch (Throwable $e) {
+            // ignore
+        }
+    }
     json_response(500, ['error' => 'Unable to init Stripe request']);
 }
 
@@ -1007,6 +1075,16 @@ $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 if ($response === false) {
+    if (is_string($inventoryReservationId) && $inventoryReservationId !== '') {
+        try {
+            $locked = simone_inventory_open_locked($config);
+            $inv = $locked['data'];
+            simone_inventory_cancel_reservation($inv, $inventoryReservationId);
+            simone_inventory_save_and_close($locked['fh'], $locked['path'], $inv);
+        } catch (Throwable $e) {
+            // ignore
+        }
+    }
     append_checkout_log([
         'req_id' => $reqId,
         'stage' => 'stripe_session_failed',
@@ -1025,11 +1103,31 @@ if ($response === false) {
 
 $data = json_decode($response, true);
 if (!is_array($data)) {
+    if (is_string($inventoryReservationId) && $inventoryReservationId !== '') {
+        try {
+            $locked = simone_inventory_open_locked($config);
+            $inv = $locked['data'];
+            simone_inventory_cancel_reservation($inv, $inventoryReservationId);
+            simone_inventory_save_and_close($locked['fh'], $locked['path'], $inv);
+        } catch (Throwable $e) {
+            // ignore
+        }
+    }
     append_checkout_log(['req_id' => $reqId, 'stage' => 'stripe_bad_json', 'http_code' => $httpCode, 'duration_ms' => $durationMs]);
     json_response(502, ['error' => 'Invalid Stripe response']);
 }
 
 if ($httpCode < 200 || $httpCode >= 300) {
+    if (is_string($inventoryReservationId) && $inventoryReservationId !== '') {
+        try {
+            $locked = simone_inventory_open_locked($config);
+            $inv = $locked['data'];
+            simone_inventory_cancel_reservation($inv, $inventoryReservationId);
+            simone_inventory_save_and_close($locked['fh'], $locked['path'], $inv);
+        } catch (Throwable $e) {
+            // ignore
+        }
+    }
     $msg = $data['error']['message'] ?? 'Stripe error';
     append_checkout_log([
         'req_id' => $reqId,
@@ -1053,6 +1151,16 @@ if ($httpCode < 200 || $httpCode >= 300) {
 
 $url = $data['url'] ?? null;
 if (!is_string($url) || $url === '') {
+    if (is_string($inventoryReservationId) && $inventoryReservationId !== '') {
+        try {
+            $locked = simone_inventory_open_locked($config);
+            $inv = $locked['data'];
+            simone_inventory_cancel_reservation($inv, $inventoryReservationId);
+            simone_inventory_save_and_close($locked['fh'], $locked['path'], $inv);
+        } catch (Throwable $e) {
+            // ignore
+        }
+    }
     append_checkout_log(['req_id' => $reqId, 'stage' => 'missing_url', 'http_code' => $httpCode, 'duration_ms' => $durationMs]);
     json_response(502, [
         'error' => 'Stripe did not return a checkout URL',
