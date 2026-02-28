@@ -654,9 +654,9 @@ $cartSubtotalCents = null;
 $freeShippingThresholdCents = (int)($config['free_shipping_threshold_cents'] ?? 9000);
 if ($freeShippingThresholdCents < 0) $freeShippingThresholdCents = 0;
 
-// Europe threshold override (default 120,00 EUR) when not France.
+// Europe threshold override (default 110,00 EUR) when not France.
 if ($shippingCountry !== 'FR') {
-    $euThreshold = (int)($config['free_shipping_threshold_eu_cents'] ?? 12000);
+    $euThreshold = (int)($config['free_shipping_threshold_eu_cents'] ?? 11000);
     if ($euThreshold > 0) $freeShippingThresholdCents = $euThreshold;
 }
 

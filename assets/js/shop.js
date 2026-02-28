@@ -14,9 +14,9 @@ function formatEUR(value) {
 // ======================
 
 // Free shipping thresholds (products subtotal) in cents.
-// France: 90,00 EUR — Europe: 120,00 EUR
+// France: 90,00 EUR — Europe: 110,00 EUR
 const SIMONE_FREE_SHIPPING_THRESHOLD_FR_CENTS = 9000;
-const SIMONE_FREE_SHIPPING_THRESHOLD_EU_CENTS = 12000;
+const SIMONE_FREE_SHIPPING_THRESHOLD_EU_CENTS = 11000;
 
 function getSelectedCheckoutCountry() {
   const sel = document.getElementById("checkoutCountry");

@@ -61,8 +61,8 @@ return [
     'free_shipping_threshold_cents' => 9000,
 
     // Optional: free shipping threshold for Europe (non-FR), in cents.
-    // Example: 12000 means free shipping from 120.00 EUR.
-    'free_shipping_threshold_eu_cents' => 12000,
+    // Example: 11000 means free shipping from 110.00 EUR.
+    'free_shipping_threshold_eu_cents' => 11000,
 
     // Mondial Relay shipping brackets (France only in this project).
     // First matching bracket where weight <= max_weight_grams is used.
