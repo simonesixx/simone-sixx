@@ -283,6 +283,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("productId").value = p.id || "";
     document.getElementById("productName").value = p.name || "";
     document.getElementById("productPrice").value = p.price ?? "";
+    const stripeIdInput = document.getElementById("productStripePriceId");
+    if (stripeIdInput) stripeIdInput.value = p.stripePriceId || "";
+
+    const weightInput = document.getElementById("productWeightGrams");
+    if (weightInput) weightInput.value = (p.weight_grams ?? p.weightGrams ?? "");
     // Ne pas injecter une énorme data URL dans un input texte
     document.getElementById("productImage").value = (p.image && typeof p.image === "string" && !p.image.startsWith("data:")) ? p.image : "";
 
@@ -477,10 +482,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (level2Feminin?.checked) selectedLevel2.push("feminin");
     if (level2Masculin?.checked) selectedLevel2.push("masculin");
 
+    const stripePriceIdRaw = String(document.getElementById("productStripePriceId")?.value || "").trim();
+    const stripePriceId = stripePriceIdRaw || "";
+
+    const weightRaw = String(document.getElementById("productWeightGrams")?.value || "").trim();
+    let weightGrams = weightRaw === "" ? null : Number(weightRaw);
+    if (weightGrams !== null) {
+      weightGrams = Number.isFinite(weightGrams) ? Math.round(weightGrams) : null;
+      if (weightGrams !== null && weightGrams < 0) weightGrams = 0;
+    }
+
     const product = {
       id: document.getElementById("productId").value.trim(),
       name: document.getElementById("productName").value.trim(),
       price: Number(document.getElementById("productPrice").value),
+      stripePriceId: stripePriceId || undefined,
+      weight_grams: (typeof weightGrams === "number" && Number.isFinite(weightGrams) && weightGrams > 0) ? weightGrams : undefined,
       image: document.getElementById("productImage").value.trim(),
       images: [],
       description: document.getElementById("productDescription").value.trim(),
@@ -551,6 +568,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!product.image && product.images.length > 0) {
         product.image = product.images[0];
       }
+    }
+
+    if (product.stripePriceId && !/^price_[A-Za-z0-9_]+$/.test(String(product.stripePriceId))) {
+      alert("Le Stripe Price ID semble invalide. Il doit ressembler à : price_123...");
+      return;
     }
 
     if (!product.id || !product.name || !Number.isFinite(product.price) || !product.image) {

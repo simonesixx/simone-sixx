@@ -112,6 +112,12 @@ function computeCartWeightGrams(cart) {
   if (!Array.isArray(cart) || cart.length === 0) return 0;
   let total = 0;
   for (const item of cart) {
+    const directWeight = item && typeof item === "object" ? Number(item.weight_grams ?? item.weightGrams ?? NaN) : NaN;
+    if (Number.isFinite(directWeight) && directWeight > 0) {
+      total += Math.round(directWeight);
+      continue;
+    }
+
     const priceId = getPriceIdFromCartItem(item);
     if (!priceId) continue;
     const w = SIMONE_WEIGHTS_BY_PRICE_ID[priceId];
