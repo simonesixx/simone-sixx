@@ -520,6 +520,10 @@ async function checkout(buttonEl) {
 
   const cart = loadCart();
 
+  const cartSubtotalCents = Array.isArray(cart)
+    ? cart.reduce((sum, item) => sum + eurosToCents(item && typeof item === "object" ? item.price : 0), 0)
+    : 0;
+
   const emailInput = document.getElementById("checkoutEmail");
   const nameInput = document.getElementById("checkoutName");
   const phoneInput = document.getElementById("checkoutPhone");
@@ -727,6 +731,7 @@ async function checkout(buttonEl) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         items,
+        cart_subtotal_cents: cartSubtotalCents,
         customer_phone: phone || undefined,
         customer_email: email || undefined,
         customer_name: fullName || undefined,

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-define('SIMONE_STRIPE_VERSION', '2026-02-25-12');
+define('SIMONE_STRIPE_VERSION', '2026-02-28-01');
 header('X-Simone-Stripe: ' . SIMONE_STRIPE_VERSION);
 
 function append_checkout_log(array $row): void {
@@ -276,6 +276,8 @@ function load_config(): array {
         'allowed_countries' => ['FR'],
         'shipping_rate_ids' => [],
         'allow_promotion_codes' => true,
+        // Default free-shipping threshold: 90,00 EUR (in cents)
+        'free_shipping_threshold_cents' => 9000,
         '__config_path' => null,
     ];
 
@@ -388,6 +390,18 @@ $payload = json_decode($raw ?: '', true);
 if (!is_array($payload)) {
     append_checkout_log(['req_id' => $reqId, 'stage' => 'bad_json']);
     json_response(400, ['error' => 'Invalid JSON body']);
+}
+
+$clientSubtotalCents = $payload['cart_subtotal_cents'] ?? null;
+if (is_int($clientSubtotalCents)) {
+    // ok
+} elseif (is_numeric($clientSubtotalCents)) {
+    $clientSubtotalCents = (int)$clientSubtotalCents;
+} else {
+    $clientSubtotalCents = null;
+}
+if (is_int($clientSubtotalCents) && $clientSubtotalCents < 0) {
+    $clientSubtotalCents = 0;
 }
 
 $customerEmail = $payload['customer_email'] ?? null;
@@ -544,11 +558,27 @@ foreach ($items as $item) {
 $cartWeightGrams = null;
 $mrShippingCents = null;
 $cartSubtotalCents = null;
-$freeShippingThresholdCents = (int)($config['free_shipping_threshold_cents'] ?? 0);
+$freeShippingThresholdCents = (int)($config['free_shipping_threshold_cents'] ?? 9000);
 if ($freeShippingThresholdCents < 0) $freeShippingThresholdCents = 0;
 
 if ($freeShippingThresholdCents > 0) {
     $cartSubtotalCents = compute_cart_subtotal_cents_via_stripe($lineItems, $secretKey);
+
+    // Fallback: if the hosting blocks/limits extra Stripe API calls, use client subtotal.
+    // This can only make shipping cheaper (never more expensive), which is acceptable.
+    if ($cartSubtotalCents === null && is_int($clientSubtotalCents)) {
+        $cartSubtotalCents = $clientSubtotalCents;
+        append_checkout_log([
+            'req_id' => $reqId,
+            'stage' => 'subtotal_fallback_client',
+            'client_subtotal_cents' => $clientSubtotalCents,
+        ]);
+    } elseif ($cartSubtotalCents === null) {
+        append_checkout_log([
+            'req_id' => $reqId,
+            'stage' => 'subtotal_unavailable',
+        ]);
+    }
 }
 
 $isFreeShipping = ($freeShippingThresholdCents > 0 && $cartSubtotalCents !== null && $cartSubtotalCents >= $freeShippingThresholdCents);
