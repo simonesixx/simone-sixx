@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="assets/css/style.css?v=20260228-2">
 
   <!-- JS -->
-  <script src="assets/js/shop.js?v=20260228-4" defer></script>
+  <script src="assets/js/shop.js?v=20260228-5" defer></script>
   <script src="assets/js/newsletter.js" defer></script>
 
 </head>
@@ -107,8 +107,26 @@
         <label for="checkoutName">Nom complet</label>
         <input id="checkoutName" type="text" autocomplete="name" placeholder="Nom Prénom" required>
 
-        <label for="checkoutPhone">Téléphone</label>
-        <input id="checkoutPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="06…" required>
+        <div class="checkout-contact-row">
+          <div>
+            <label for="checkoutPhoneDial">Indicatif</label>
+            <select id="checkoutPhoneDial" autocomplete="tel-country-code" required>
+              <option value="+33">+33 (France)</option>
+              <option value="+32">+32 (Belgique)</option>
+              <option value="+352">+352 (Luxembourg)</option>
+              <option value="+31">+31 (Pays-Bas)</option>
+              <option value="+49">+49 (Allemagne)</option>
+              <option value="+34">+34 (Espagne)</option>
+              <option value="+351">+351 (Portugal)</option>
+              <option value="+39">+39 (Italie)</option>
+              <option value="+43">+43 (Autriche)</option>
+            </select>
+          </div>
+          <div>
+            <label for="checkoutPhone">Téléphone</label>
+            <input id="checkoutPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="06…" required>
+          </div>
+        </div>
 
         <label for="checkoutAddress1">Adresse</label>
         <input id="checkoutAddress1" type="text" autocomplete="shipping address-line1" placeholder="Ligne d’adresse n°1" required>

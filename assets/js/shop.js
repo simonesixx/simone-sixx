@@ -25,6 +25,37 @@ function getSelectedCheckoutCountry() {
   return c || "FR";
 }
 
+function getDialCodeForCountry(countryCode) {
+  const c = String(countryCode || "FR").trim().toUpperCase();
+  if (c === "FR") return "+33";
+  if (c === "BE") return "+32";
+  if (c === "LU") return "+352";
+  if (c === "NL") return "+31";
+  if (c === "DE") return "+49";
+  if (c === "ES") return "+34";
+  if (c === "PT") return "+351";
+  if (c === "IT") return "+39";
+  if (c === "AT") return "+43";
+  return "+33";
+}
+
+function getSelectedPhoneDialCode() {
+  const sel = document.getElementById("checkoutPhoneDial");
+  const raw = sel && typeof sel.value === "string" ? sel.value : getDialCodeForCountry(getSelectedCheckoutCountry());
+  const dial = String(raw || "").trim();
+  return dial.startsWith("+") ? dial : (dial ? ("+" + dial.replace(/^\+/, "")) : "+33");
+}
+
+function normalizePhoneE164ish(phoneRaw, dialCode) {
+  const raw = String(phoneRaw || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("+")) return raw;
+  if (raw.startsWith("00")) return "+" + raw.slice(2);
+  const dial = String(dialCode || "+33").trim();
+  // If user typed a local number like 06..., keep digits/spaces as-is but prepend dial.
+  return dial + " " + raw;
+}
+
 function getFreeShippingThresholdCentsForCountry(countryCode) {
   const c = String(countryCode || "FR").trim().toUpperCase();
   return c === "FR" ? SIMONE_FREE_SHIPPING_THRESHOLD_FR_CENTS : SIMONE_FREE_SHIPPING_THRESHOLD_EU_CENTS;
@@ -616,6 +647,7 @@ async function checkout(buttonEl) {
   const emailInput = document.getElementById("checkoutEmail");
   const nameInput = document.getElementById("checkoutName");
   const phoneInput = document.getElementById("checkoutPhone");
+  const phoneDialInput = document.getElementById("checkoutPhoneDial");
   const address1Input = document.getElementById("checkoutAddress1");
   const address2Input = document.getElementById("checkoutAddress2");
   const postalInput = document.getElementById("checkoutPostal");
@@ -625,11 +657,14 @@ async function checkout(buttonEl) {
   const email = emailInput && typeof emailInput.value === "string" ? emailInput.value.trim() : "";
   const fullName = nameInput && typeof nameInput.value === "string" ? nameInput.value.trim() : "";
   const phone = phoneInput && typeof phoneInput.value === "string" ? phoneInput.value.trim() : "";
+  const phoneDial = phoneDialInput && typeof phoneDialInput.value === "string" ? phoneDialInput.value.trim() : getSelectedPhoneDialCode();
   const address1 = address1Input && typeof address1Input.value === "string" ? address1Input.value.trim() : "";
   const address2 = address2Input && typeof address2Input.value === "string" ? address2Input.value.trim() : "";
   const postal = postalInput && typeof postalInput.value === "string" ? postalInput.value.trim() : "";
   const city = cityInput && typeof cityInput.value === "string" ? cityInput.value.trim() : "";
   const country = countryInput && typeof countryInput.value === "string" ? countryInput.value.trim().toUpperCase() : getSelectedCheckoutCountry();
+
+  const phoneFull = normalizePhoneE164ish(phone, phoneDial || getDialCodeForCountry(country));
 
   const shippingMethodEl = document.querySelector('input[name="shippingMethod"]:checked');
   const shippingMethod = shippingMethodEl && typeof shippingMethodEl.value === "string" ? String(shippingMethodEl.value || "").trim() : "home";
@@ -653,6 +688,7 @@ async function checkout(buttonEl) {
     if (emailInput) localStorage.setItem("checkout_email", email);
     if (nameInput) localStorage.setItem("checkout_name", fullName);
     if (phoneInput) localStorage.setItem("checkout_phone", phone);
+    if (phoneDialInput) localStorage.setItem("checkout_phone_dial", phoneDial);
     if (address1Input) localStorage.setItem("checkout_address1", address1);
     if (address2Input) localStorage.setItem("checkout_address2", address2);
     if (postalInput) localStorage.setItem("checkout_postal", postal);
@@ -833,7 +869,7 @@ async function checkout(buttonEl) {
       body: JSON.stringify({
         items,
         cart_subtotal_cents: cartSubtotalCents,
-        customer_phone: phone || undefined,
+        customer_phone: phoneFull || undefined,
         customer_email: email || undefined,
         customer_name: fullName || undefined,
         shipping_method: shippingMethod,
@@ -1099,6 +1135,15 @@ window.checkout = checkout;
         } catch {
           // ignore
         }
+
+        // Sync phone dial code with country by default.
+        try {
+          const dialSel = document.getElementById("checkoutPhoneDial");
+          if (dialSel) dialSel.value = getDialCodeForCountry(getSelectedCheckoutCountry());
+        } catch {
+          // ignore
+        }
+
         toggleMr();
         try {
           const cart = loadCart();
@@ -1122,6 +1167,7 @@ try {
   const emailInput = document.getElementById("checkoutEmail");
   const nameInput = document.getElementById("checkoutName");
   const phoneInput = document.getElementById("checkoutPhone");
+  const phoneDialInput = document.getElementById("checkoutPhoneDial");
   const address1Input = document.getElementById("checkoutAddress1");
   const address2Input = document.getElementById("checkoutAddress2");
   const postalInput = document.getElementById("checkoutPostal");
@@ -1139,6 +1185,12 @@ try {
   if (phoneInput && !phoneInput.value) {
     const saved = localStorage.getItem("checkout_phone");
     if (saved) phoneInput.value = saved;
+  }
+
+  if (phoneDialInput) {
+    const savedDial = localStorage.getItem("checkout_phone_dial");
+    const fromCountry = getDialCodeForCountry(getSelectedCheckoutCountry());
+    phoneDialInput.value = savedDial ? String(savedDial).trim() : fromCountry;
   }
   if (address1Input && !address1Input.value) {
     const saved = localStorage.getItem("checkout_address1");
