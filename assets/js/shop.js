@@ -9,6 +9,138 @@ function formatEUR(value) {
     }) + " EUR";
 }
 
+// ======================
+// LIVRAISON (ESTIMATION PANIER)
+// ======================
+
+// Public rates (not secrets). Keep in sync with your server-side shipping brackets.
+// Amounts are in cents.
+const SIMONE_MR_RATES = [
+  { max_weight_grams: 250, amount_cents: 342 },
+  { max_weight_grams: 500, amount_cents: 342 },
+  { max_weight_grams: 1000, amount_cents: 376 },
+  { max_weight_grams: 2000, amount_cents: 527 },
+  { max_weight_grams: 3000, amount_cents: 559 },
+  { max_weight_grams: 4000, amount_cents: 559 },
+  { max_weight_grams: 5000, amount_cents: 1113 },
+  { max_weight_grams: 7000, amount_cents: 1113 },
+  { max_weight_grams: 10000, amount_cents: 1113 },
+  { max_weight_grams: 15000, amount_cents: 1747 },
+  { max_weight_grams: 20000, amount_cents: 1747 },
+  { max_weight_grams: 25000, amount_cents: 1747 },
+  { max_weight_grams: 30000, amount_cents: 1999 },
+];
+
+// Packed weights (grams) used for display estimation.
+const SIMONE_WEIGHTS_BY_PRICE_ID = {
+  "price_1T4LB60XZVE1puxSTKgblJPz": 120, // 30 ml
+  "price_1T4Vko0XZVE1puxSJUSVeBjD": 140, // 50 ml
+};
+
+const SIMONE_LEGACY_PRICE_ID_MAP = new Map([
+  // Live → Test (si un ancien panier a été créé en live)
+  ["price_1T4Ypg1pW7akGXOM8wnRfRar", "price_1T4LB60XZVE1puxSTKgblJPz"], // 30 ml
+  ["price_1T4Yph1pW7akGXOM9qTPSGtH", "price_1T4Vko0XZVE1puxSJUSVeBjD"], // 50 ml
+]);
+
+function eurosToCents(value) {
+  const n = typeof value === "number" ? value : Number(String(value || "").replace(",", "."));
+  if (!Number.isFinite(n)) return 0;
+  return Math.round(n * 100);
+}
+
+function centsToEuros(cents) {
+  const n = typeof cents === "number" ? cents : Number(cents);
+  if (!Number.isFinite(n)) return 0;
+  return n / 100;
+}
+
+function getSelectedShippingMethod() {
+  const el = document.querySelector('input[name="shippingMethod"]:checked');
+  const v = el && typeof el.value === "string" ? String(el.value || "").trim() : "home";
+  return (v === "mondial_relay" || v === "home") ? v : "home";
+}
+
+function getPriceIdFromCartItem(item) {
+  if (!item || typeof item !== "object") return null;
+  let priceId = item.stripePriceId || item.priceId || null;
+  if (priceId && SIMONE_LEGACY_PRICE_ID_MAP.has(priceId)) {
+    priceId = SIMONE_LEGACY_PRICE_ID_MAP.get(priceId);
+  }
+
+  // Compat: si un ancien panier / une ancienne page n'a pas l'attribut `stripePriceId`
+  if (!priceId) {
+    const name = String(item.name || "").toLowerCase();
+    const format = String(item.format || item.size || "").toLowerCase().trim();
+    if (name.includes("la chambre du sixième étage") || name.includes("la chambre du sixieme etage")) {
+      if (format === "30 ml" || format === "30ml") return "price_1T4LB60XZVE1puxSTKgblJPz";
+      if (format === "50 ml" || format === "50ml") return "price_1T4Vko0XZVE1puxSJUSVeBjD";
+    }
+  }
+
+  return typeof priceId === "string" && priceId.trim() ? priceId.trim() : null;
+}
+
+function computeCartWeightGrams(cart) {
+  if (!Array.isArray(cart) || cart.length === 0) return 0;
+  let total = 0;
+  for (const item of cart) {
+    const priceId = getPriceIdFromCartItem(item);
+    if (!priceId) continue;
+    const w = SIMONE_WEIGHTS_BY_PRICE_ID[priceId];
+    if (typeof w === "number" && Number.isFinite(w) && w > 0) total += w;
+  }
+  return total;
+}
+
+function computeShippingCentsFromRates(weightGrams, rates) {
+  const w = Math.max(0, Number(weightGrams) || 0);
+  const normalized = Array.isArray(rates) ? rates
+    .map(r => ({
+      max: (r && r.max_weight_grams != null) ? Number(r.max_weight_grams) : null,
+      amount: (r && r.amount_cents != null) ? Number(r.amount_cents) : null,
+    }))
+    .filter(r => Number.isFinite(r.amount) && r.amount >= 0)
+    : [];
+
+  normalized.sort((a, b) => {
+    const am = a.max;
+    const bm = b.max;
+    if (am == null && bm == null) return 0;
+    if (am == null) return 1;
+    if (bm == null) return -1;
+    return am - bm;
+  });
+
+  for (const r of normalized) {
+    if (r.max == null) continue;
+    if (w <= r.max) return Math.round(r.amount);
+  }
+  const open = normalized.find(r => r.max == null);
+  if (open) return Math.round(open.amount);
+  if (normalized.length > 0) return Math.round(normalized[normalized.length - 1].amount);
+  return 0;
+}
+
+function updateCartTotalsDisplay(cart, subtotalCents) {
+  const subtotalEl = document.getElementById("cartSubtotal");
+  const shippingEl = document.getElementById("cartShipping");
+  const totalEl = document.getElementById("cartTotal");
+  if (!totalEl) return;
+
+  const method = getSelectedShippingMethod();
+  const weightGrams = computeCartWeightGrams(cart);
+  const shippingCents = method === "mondial_relay"
+    ? computeShippingCentsFromRates(weightGrams, SIMONE_MR_RATES)
+    : 0;
+
+  const totalCents = Math.max(0, (Number(subtotalCents) || 0) + shippingCents);
+
+  if (subtotalEl) subtotalEl.textContent = formatEUR(centsToEuros(Math.max(0, Number(subtotalCents) || 0)));
+  if (shippingEl) shippingEl.textContent = formatEUR(centsToEuros(shippingCents));
+  totalEl.textContent = formatEUR(centsToEuros(totalCents));
+}
+
 
 // ======================
 // PANIER (GLOBAL)
@@ -307,10 +439,10 @@ function renderCart() {
   const cart = loadCart();
 
   cartContainer.innerHTML = "";
-  let total = 0;
+  let subtotalCents = 0;
 
   cart.forEach((item, index) => {
-    total += item.price;
+    subtotalCents += eurosToCents(item && typeof item === "object" ? item.price : 0);
 
     const div = document.createElement("div");
     div.className = "cart-item";
@@ -324,7 +456,8 @@ function renderCart() {
     cartContainer.appendChild(div);
   });
 
-  cartTotal.textContent = formatEUR(total);
+  // Total includes estimated shipping (Mondial Relay only). Stripe remains authoritative.
+  updateCartTotalsDisplay(cart, subtotalCents);
 }
 
 function removeItem(index) {
@@ -510,11 +643,7 @@ async function checkout(buttonEl) {
 
   // On attend des items avec `stripePriceId` (Price ID Stripe) pour chaque ligne.
   // Ex: price_123...
-  const legacyPriceIdMap = new Map([
-    // Live → Test (si un ancien panier a été créé en live)
-    ["price_1T4Ypg1pW7akGXOM8wnRfRar", "price_1T4LB60XZVE1puxSTKgblJPz"], // 30 ml
-    ["price_1T4Yph1pW7akGXOM9qTPSGtH", "price_1T4Vko0XZVE1puxSJUSVeBjD"], // 50 ml
-  ]);
+  const legacyPriceIdMap = SIMONE_LEGACY_PRICE_ID_MAP;
 
   const countsByPriceId = new Map();
   for (const item of cart) {
@@ -795,6 +924,14 @@ window.checkout = checkout;
         // ignore
       }
       toggleMr();
+      try {
+        const cart = loadCart();
+        let subtotalCents = 0;
+        for (const item of cart) subtotalCents += eurosToCents(item && typeof item === "object" ? item.price : 0);
+        updateCartTotalsDisplay(cart, subtotalCents);
+      } catch {
+        // ignore
+      }
     }));
 
     // Re-init / refresh search when postal/city changes.

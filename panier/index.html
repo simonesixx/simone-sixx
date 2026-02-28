@@ -177,7 +177,11 @@
   </div>
 
   <div class="cart-footer">
-    <p>Total : <span id="cartTotal">0,00 EUR</span></p>
+    <div class="cart-totals" aria-label="Récapitulatif des montants">
+      <p>Sous-total : <span id="cartSubtotal">0,00 EUR</span></p>
+      <p>Livraison : <span id="cartShipping">0,00 EUR</span></p>
+      <p>Total : <span id="cartTotal">0,00 EUR</span></p>
+    </div>
     <button class="add-to-cart" onclick="checkout(this)">Passer au paiement</button>
   </div>
 
