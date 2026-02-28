@@ -150,6 +150,55 @@ function compute_mondial_relay_shipping_cents(int $weightGrams, array $config): 
     return (int)$normalized[count($normalized) - 1]['amount'];
 }
 
+function compute_home_shipping_cents(int $weightGrams, array $config): ?int {
+    $rates = $config['home_shipping_rates'] ?? null;
+    if (!is_array($rates) || count($rates) === 0) return null;
+
+    $normalized = [];
+    foreach ($rates as $row) {
+        if (!is_array($row)) continue;
+        $max = $row['max_weight_grams'] ?? null;
+        $amount = $row['amount_cents'] ?? null;
+        if (!is_int($amount)) {
+            $amount = is_numeric($amount) ? (int)$amount : null;
+        }
+        if ($amount === null || $amount < 0) continue;
+
+        $maxInt = null;
+        if ($max !== null) {
+            $maxInt = is_numeric($max) ? (int)$max : null;
+            if ($maxInt !== null && $maxInt <= 0) $maxInt = null;
+        }
+
+        $normalized[] = ['max' => $maxInt, 'amount' => $amount];
+    }
+
+    if (count($normalized) === 0) return null;
+
+    usort($normalized, function ($a, $b) {
+        $am = $a['max'];
+        $bm = $b['max'];
+        if ($am === null && $bm === null) return 0;
+        if ($am === null) return 1;
+        if ($bm === null) return -1;
+        return $am <=> $bm;
+    });
+
+    foreach ($normalized as $row) {
+        $max = $row['max'];
+        if ($max === null) continue;
+        if ($weightGrams <= $max) {
+            return (int)$row['amount'];
+        }
+    }
+
+    // Fallback: open-ended rate (max=null) if provided, else the last bracket.
+    foreach ($normalized as $row) {
+        if ($row['max'] === null) return (int)$row['amount'];
+    }
+    return (int)$normalized[count($normalized) - 1]['amount'];
+}
+
 function load_config(): array {
     $default = [
         'stripe_secret_key' => getenv('STRIPE_SECRET_KEY') ?: '',
@@ -464,6 +513,34 @@ if ($shippingMethod === 'mondial_relay') {
     ];
 }
 
+// Optional: home delivery shipping line chosen on-site.
+$homeShippingCents = null;
+if ($shippingMethod === 'home') {
+    $currency = is_string($config['currency'] ?? null) && trim((string)$config['currency']) !== ''
+        ? strtolower(trim((string)$config['currency']))
+        : 'eur';
+
+    $cartWeightGrams = compute_cart_weight_grams($lineItems, $config);
+    $homeShippingCents = compute_home_shipping_cents($cartWeightGrams, $config);
+    if ($homeShippingCents === null) {
+        // If not configured, default to 0 to avoid blocking checkout.
+        $homeShippingCents = 0;
+    }
+
+    if ((int)$homeShippingCents > 0) {
+        $lineItems[] = [
+            'price_data' => [
+                'currency' => $currency,
+                'product_data' => [
+                    'name' => 'Livraison à domicile',
+                ],
+                'unit_amount' => (int)$homeShippingCents,
+            ],
+            'quantity' => 1,
+        ];
+    }
+}
+
 if (count($lineItems) === 0) {
     json_response(400, ['error' => 'No valid items']);
 }
@@ -521,6 +598,11 @@ if ($shippingMethod === 'mondial_relay') {
         $metadata['mr_city'] = (string)($mondialRelay['city'] ?? '');
         $metadata['mr_country'] = (string)($mondialRelay['country'] ?? 'FR');
     }
+}
+
+if ($shippingMethod === 'home') {
+    $metadata['cart_weight_grams'] = $cartWeightGrams !== null ? (string)$cartWeightGrams : '';
+    $metadata['home_shipping_cents'] = $homeShippingCents !== null ? (string)$homeShippingCents : '';
 }
 
 // Stripe expects scalar metadata values.

@@ -31,6 +31,23 @@ const SIMONE_MR_RATES = [
   { max_weight_grams: 30000, amount_cents: 1999 },
 ];
 
+// Home delivery rates (France). Amounts are in cents.
+// Source: your "À DOMICILE" table (France), € HT/colis avant remise.
+const SIMONE_HOME_RATES = [
+  { max_weight_grams: 250, amount_cents: 441 },
+  { max_weight_grams: 500, amount_cents: 624 },
+  { max_weight_grams: 1000, amount_cents: 790 },
+  { max_weight_grams: 2000, amount_cents: 913 },
+  { max_weight_grams: 3000, amount_cents: 1362 },
+  { max_weight_grams: 4000, amount_cents: 1362 },
+  { max_weight_grams: 5000, amount_cents: 1362 },
+  { max_weight_grams: 7000, amount_cents: 2083 },
+  { max_weight_grams: 10000, amount_cents: 2083 },
+  { max_weight_grams: 15000, amount_cents: 2624 },
+  { max_weight_grams: 20000, amount_cents: 3583 },
+  { max_weight_grams: 25000, amount_cents: 3583 },
+];
+
 // Packed weights (grams) used for display estimation.
 const SIMONE_WEIGHTS_BY_PRICE_ID = {
   "price_1T4LB60XZVE1puxSTKgblJPz": 120, // 30 ml
@@ -132,7 +149,7 @@ function updateCartTotalsDisplay(cart, subtotalCents) {
   const weightGrams = computeCartWeightGrams(cart);
   const shippingCents = method === "mondial_relay"
     ? computeShippingCentsFromRates(weightGrams, SIMONE_MR_RATES)
-    : 0;
+    : computeShippingCentsFromRates(weightGrams, SIMONE_HOME_RATES);
 
   const totalCents = Math.max(0, (Number(subtotalCents) || 0) + shippingCents);
 

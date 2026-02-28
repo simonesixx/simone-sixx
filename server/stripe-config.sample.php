@@ -64,4 +64,15 @@ return [
         // ['max_weight_grams' => 2000, 'amount_cents' => 695],
         // ['max_weight_grams' => null, 'amount_cents' => 895], // open-ended
     ],
+
+    // Home delivery shipping brackets (France).
+    // First matching bracket where weight <= max_weight_grams is used.
+    // amount_cents is the shipping price in cents.
+    'home_shipping_rates' => [
+        // ['max_weight_grams' => 250,  'amount_cents' => 441],
+        // ['max_weight_grams' => 500,  'amount_cents' => 624],
+        // ['max_weight_grams' => 1000, 'amount_cents' => 790],
+        // ['max_weight_grams' => 2000, 'amount_cents' => 913],
+        // ['max_weight_grams' => null, 'amount_cents' => 3583], // open-ended
+    ],
 ];
