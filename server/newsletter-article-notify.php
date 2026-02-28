@@ -180,7 +180,7 @@ function build_article_email_body(array $article, string $url, ?string $unsubscr
     return implode("\n", $lines);
 }
 
-function build_article_email_html(array $article, string $url, ?string $unsubscribeUrl = null): string {
+function build_article_email_html(array $article, string $url, ?string $unsubscribeUrl = null, ?string $logoUrl = null): string {
     $title = is_string($article['title'] ?? null) ? trim((string)$article['title']) : '';
     $date = is_string($article['date'] ?? null) ? trim((string)$article['date']) : '';
     $excerpt = is_string($article['excerpt'] ?? null) ? trim((string)$article['excerpt']) : '';
@@ -190,33 +190,52 @@ function build_article_email_html(array $article, string $url, ?string $unsubscr
     $excerptEsc = htmlspecialchars($excerpt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $urlEsc = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $unsubEsc = is_string($unsubscribeUrl) ? htmlspecialchars($unsubscribeUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : '';
+    $logoUrlEsc = is_string($logoUrl) ? htmlspecialchars($logoUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : '';
 
     $hasUnsub = is_string($unsubscribeUrl) && trim($unsubscribeUrl) !== '';
+    $hasLogo = is_string($logoUrl) && trim($logoUrl) !== '';
 
     $html = '';
-    $html .= '<!doctype html><html lang="fr"><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#ffffff;">';
-    $html .= '<div style="max-width:640px;margin:0 auto;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#111;line-height:1.5;">';
-    $html .= '<div style="font-size:14px;letter-spacing:0.02em;text-transform:uppercase;color:#444;">Journal de Simone Sixx</div>';
+    $html .= '<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>';
+    $html .= '<body style="margin:0;padding:0;background:#ffffff;">';
+    $html .= '<div style="max-width:640px;margin:0 auto;padding:34px 22px;font-family:Arial,Helvetica,sans-serif;color:#111;line-height:1.6;">';
+
+    if ($hasLogo) {
+        $html .= '<div style="text-align:center;margin:2px 0 22px;">';
+        $html .= '<img src="' . $logoUrlEsc . '" alt="Simone Sixx" style="display:inline-block;max-width:160px;width:100%;height:auto;">';
+        $html .= '</div>';
+    }
+
+    $html .= '<div style="text-align:center;font-size:12px;letter-spacing:0.28em;text-transform:uppercase;color:#111;">Journal de Simone Sixx</div>';
+
     if ($titleEsc !== '') {
-        $html .= '<h1 style="margin:10px 0 4px;font-size:22px;line-height:1.25;font-weight:700;">' . $titleEsc . '</h1>';
+        $html .= '<h1 style="margin:18px 0 8px;text-align:center;font-size:28px;line-height:1.2;font-weight:600;">' . $titleEsc . '</h1>';
     }
     if ($dateEsc !== '') {
-        $html .= '<div style="font-size:13px;color:#666;margin-bottom:16px;">' . $dateEsc . '</div>';
+        $html .= '<div style="text-align:center;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#666;margin-bottom:18px;">' . $dateEsc . '</div>';
     } else {
-        $html .= '<div style="margin-bottom:16px;"></div>';
+        $html .= '<div style="margin-bottom:18px;"></div>';
     }
+
+    $html .= '<div style="border-top:1px solid #eee;margin:0 auto 22px;max-width:520px;"></div>';
+
     if ($excerptEsc !== '') {
-        $html .= '<p style="margin:0 0 18px;font-size:15px;color:#222;">' . nl2br($excerptEsc) . '</p>';
+        $html .= '<div style="max-width:520px;margin:0 auto 22px;font-size:14px;color:#222;">' . nl2br($excerptEsc) . '</div>';
     }
-    $html .= '<div style="margin:18px 0 22px;">';
-    $html .= '<a href="' . $urlEsc . '" style="display:inline-block;padding:12px 16px;text-decoration:none;border:1px solid #111;color:#111;font-size:14px;">Lire l\'article</a>';
+
+    $html .= '<div style="text-align:center;margin:10px 0 26px;">';
+    $html .= '<a href="' . $urlEsc . '" style="display:inline-block;padding:12px 18px;text-decoration:none;border:1px solid #111;color:#111;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;">Lire l\'article</a>';
     $html .= '</div>';
-    $html .= '<div style="border-top:1px solid #eee;margin-top:22px;padding-top:14px;font-size:12px;color:#666;">';
-    $html .= '<div style="margin-bottom:8px;">Simone Sixx</div>';
+
+    $html .= '<div style="border-top:1px solid #eee;margin-top:26px;padding-top:14px;font-size:11px;color:#666;">';
+    $html .= '<div style="text-align:center;letter-spacing:0.08em;text-transform:uppercase;color:#666;">Simone Sixx</div>';
     if ($hasUnsub) {
-        $html .= '<div>Se désabonner : <a href="' . $unsubEsc . '" style="color:#111;">' . $unsubEsc . '</a></div>';
+        $html .= '<div style="margin-top:10px;text-align:center;color:#777;">';
+        $html .= '<a href="' . $unsubEsc . '" style="color:#777;text-decoration:none;">Se désabonner</a>';
+        $html .= '</div>';
     }
     $html .= '</div>';
+
     $html .= '</div></body></html>';
     return $html;
 }
@@ -478,6 +497,7 @@ if ($unsubscribeSecret === '') {
 
 $baseUrl = request_base_url();
 $unsubscribeBase = $baseUrl !== '' ? ($baseUrl . '/server/newsletter-unsubscribe.php') : '';
+$logoUrl = $baseUrl !== '' ? ($baseUrl . '/assets/images/logo.png') : null;
 
 $sentNow = 0;
 $errorsNow = 0;
@@ -494,7 +514,7 @@ foreach ($batch as $emailTo) {
     }
 
     $textBody = build_article_email_body($article, $url, $unsubscribeUrl);
-    $htmlBody = build_article_email_html($article, $url, $unsubscribeUrl);
+    $htmlBody = build_article_email_html($article, $url, $unsubscribeUrl, $logoUrl);
 
     if ($dryRun) {
         $sentNow += 1;
