@@ -298,77 +298,122 @@ function updateCartTotalsDisplay(cart, subtotalCents) {
 // PANIER (GLOBAL)
 // ======================
 
-function getCartStorage() {
-  // sessionStorage: cleared when the tab/window is closed ("quit the site").
-  // Fallback to localStorage if sessionStorage is unavailable.
+const SIMONE_CART_KEY = "cart";
+const SIMONE_TAB_KEY_PREFIX = "simone_tab_";
+const SIMONE_TAB_HEARTBEAT_MS = 10000;
+const SIMONE_TAB_STALE_MS = 5 * 60 * 1000;
+
+function simoneGetTabId() {
   try {
-    if (typeof window !== "undefined" && window.sessionStorage) return window.sessionStorage;
+    const existing = window.sessionStorage ? window.sessionStorage.getItem("simone_tab_id") : null;
+    if (existing) return existing;
   } catch {
     // ignore
   }
+
+  const id = (typeof crypto !== "undefined" && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : (String(Date.now()) + "_" + Math.random().toString(16).slice(2));
+
   try {
-    if (typeof window !== "undefined" && window.localStorage) return window.localStorage;
+    if (window.sessionStorage) window.sessionStorage.setItem("simone_tab_id", id);
   } catch {
     // ignore
   }
-  return null;
+  return id;
 }
+
+function simonePruneStaleTabs(nowMs) {
+  const now = Number.isFinite(nowMs) ? nowMs : Date.now();
+  try {
+    const ls = window.localStorage;
+    if (!ls) return;
+    const keysToRemove = [];
+    for (let i = 0; i < ls.length; i++) {
+      const k = ls.key(i);
+      if (!k || !k.startsWith(SIMONE_TAB_KEY_PREFIX)) continue;
+      const v = ls.getItem(k);
+      const ts = v ? Number(v) : NaN;
+      if (!Number.isFinite(ts) || now - ts > SIMONE_TAB_STALE_MS) {
+        keysToRemove.push(k);
+      }
+    }
+    keysToRemove.forEach(k => {
+      try { ls.removeItem(k); } catch { /* ignore */ }
+    });
+  } catch {
+    // ignore
+  }
+}
+
+function simoneCountActiveTabs() {
+  try {
+    const ls = window.localStorage;
+    if (!ls) return 0;
+    let count = 0;
+    for (let i = 0; i < ls.length; i++) {
+      const k = ls.key(i);
+      if (k && k.startsWith(SIMONE_TAB_KEY_PREFIX)) count++;
+    }
+    return count;
+  } catch {
+    return 0;
+  }
+}
+
+function simoneClearCart() {
+  try {
+    if (window.localStorage) window.localStorage.removeItem(SIMONE_CART_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function simoneSetupVisitSession() {
+  // Goal: cart shared across tabs while the user is on the site,
+  // but cleared once the user has left (no site tabs open). We detect
+  // "left" on the next visit by checking whether any tab heartbeat remains.
+  try {
+    const ls = window.localStorage;
+    if (!ls) return;
+
+    const now = Date.now();
+    simonePruneStaleTabs(now);
+    const activeBefore = simoneCountActiveTabs();
+    if (activeBefore === 0) {
+      // New visit/session (no active tabs detected): clear cart.
+      simoneClearCart();
+    }
+
+    const tabId = simoneGetTabId();
+    const tabKey = SIMONE_TAB_KEY_PREFIX + tabId;
+    const beat = () => {
+      try { ls.setItem(tabKey, String(Date.now())); } catch { /* ignore */ }
+    };
+    beat();
+    setInterval(beat, SIMONE_TAB_HEARTBEAT_MS);
+  } catch {
+    // ignore
+  }
+}
+
+// Initialize as early as possible.
+simoneSetupVisitSession();
 
 function loadCart() {
   try {
-    const storage = getCartStorage();
-    if (!storage) return [];
-
-    // Primary: sessionStorage
-    const raw = storage.getItem("cart");
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    }
-
-    // One-time migration: if an old persistent cart exists, move it to sessionStorage.
-    let legacyRaw = null;
-    try {
-      legacyRaw = window.localStorage ? window.localStorage.getItem("cart") : null;
-    } catch {
-      legacyRaw = null;
-    }
-    if (legacyRaw) {
-      const legacyParsed = JSON.parse(legacyRaw);
-      const legacyCart = Array.isArray(legacyParsed) ? legacyParsed : [];
-      try {
-        if (storage && storage !== window.localStorage) {
-          storage.setItem("cart", JSON.stringify(legacyCart));
-        }
-      } catch {
-        // ignore
-      }
-      try {
-        if (window.localStorage) window.localStorage.removeItem("cart");
-      } catch {
-        // ignore
-      }
-      return legacyCart;
-    }
-
-    return [];
+    const raw = window.localStorage ? window.localStorage.getItem(SIMONE_CART_KEY) : null;
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
 function saveCart(cart) {
-  const storage = getCartStorage();
-  const payload = JSON.stringify(Array.isArray(cart) ? cart : []);
   try {
-    if (storage) storage.setItem("cart", payload);
-  } catch {
-    // ignore
-  }
-
-  // Ensure we don't leave a persistent cart behind.
-  try {
-    if (window.localStorage) window.localStorage.removeItem("cart");
+    const payload = JSON.stringify(Array.isArray(cart) ? cart : []);
+    if (window.localStorage) window.localStorage.setItem(SIMONE_CART_KEY, payload);
   } catch {
     // ignore
   }
