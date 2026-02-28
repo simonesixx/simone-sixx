@@ -15,8 +15,14 @@ return [
     'notify_token' => 'CHANGE_ME_LONG_RANDOM_TOKEN',
 
     // Sender email address used for newsletter emails (must match your domain SPF/DKIM if possible).
+    // You can also set a display name (either with email_from_name or using "Name <email@domain>" below).
     // Example: 'journal@simonesixx.com'
+    // Example: 'Journal de Simone Sixx <journal@simonesixx.com>'
     'email_from' => 'CHANGE_ME_SENDER@YOUR_DOMAIN',
+
+    // Optional display name for the sender (From header).
+    // Example: 'Journal de Simone Sixx'
+    // 'email_from_name' => 'Journal de Simone Sixx',
 
     // Secret used to sign unsubscribe links.
     // Generate a long random token and keep it secret.

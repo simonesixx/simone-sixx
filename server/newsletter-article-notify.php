@@ -43,6 +43,7 @@ function load_config(): array {
         'export_token' => null,
         'notify_token' => null,
         'email_from' => null,
+        'email_from_name' => null,
         'reply_to' => null,
         'unsubscribe_secret' => null,
         'storage_path' => __DIR__ . '/newsletter/subscribers.json',
@@ -82,6 +83,50 @@ function unsubscribe_sig(string $secret, string $email): string {
     return hash_hmac('sha256', $email, $secret);
 }
 
+function parse_from_header(string $raw, ?string $nameOverride = null): array {
+    $raw = trim($raw);
+    $nameOverride = is_string($nameOverride) ? trim($nameOverride) : null;
+    if ($nameOverride === '') $nameOverride = null;
+
+    $name = null;
+    $addr = $raw;
+
+    // Supports: Name <email@domain.tld>
+    if (preg_match('/^\s*(.+?)\s*<\s*([^>]+)\s*>\s*$/', $raw, $m)) {
+        $name = trim((string)($m[1] ?? ''));
+        $addr = trim((string)($m[2] ?? ''));
+        if ($name === '') $name = null;
+    }
+
+    $addr = trim($addr);
+    if ($addr !== '') {
+        $addrNorm = normalize_email($addr);
+        if (filter_var($addrNorm, FILTER_VALIDATE_EMAIL) !== false) {
+            $addr = $addrNorm;
+        }
+    }
+
+    if ($nameOverride !== null) {
+        $name = $nameOverride;
+    }
+
+    $envelopeFrom = (filter_var($addr, FILTER_VALIDATE_EMAIL) !== false) ? $addr : '';
+
+    if ($name !== null && $envelopeFrom !== '') {
+        // Keep it simple (ASCII name), mail() will pass it through.
+        $fromHeader = $name . ' <' . $envelopeFrom . '>';
+        return [$fromHeader, $envelopeFrom];
+    }
+
+    return [$envelopeFrom !== '' ? $envelopeFrom : $raw, $envelopeFrom];
+}
+
+function normalize_eol(string $s): string {
+    $s = str_replace("\r\n", "\n", $s);
+    $s = str_replace("\r", "\n", $s);
+    return str_replace("\n", "\r\n", $s);
+}
+
 function safe_job_id(string $id): string {
     $id = trim($id);
     if ($id === '') return 'article';
@@ -111,7 +156,7 @@ function build_article_email_body(array $article, string $url, ?string $unsubscr
     }
 
     $lines = [];
-    $lines[] = 'Journal Simone Sixx';
+    $lines[] = 'Journal de Simone Sixx';
     $lines[] = '';
     if ($title !== '') $lines[] = $title;
     if ($date !== '') $lines[] = $date;
@@ -135,28 +180,95 @@ function build_article_email_body(array $article, string $url, ?string $unsubscr
     return implode("\n", $lines);
 }
 
-function send_email(string $to, string $subject, string $body, string $from, ?string $replyTo = null): bool {
+function build_article_email_html(array $article, string $url, ?string $unsubscribeUrl = null): string {
+    $title = is_string($article['title'] ?? null) ? trim((string)$article['title']) : '';
+    $date = is_string($article['date'] ?? null) ? trim((string)$article['date']) : '';
+    $excerpt = is_string($article['excerpt'] ?? null) ? trim((string)$article['excerpt']) : '';
+
+    $titleEsc = htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $dateEsc = htmlspecialchars($date, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $excerptEsc = htmlspecialchars($excerpt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $urlEsc = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $unsubEsc = is_string($unsubscribeUrl) ? htmlspecialchars($unsubscribeUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : '';
+
+    $hasUnsub = is_string($unsubscribeUrl) && trim($unsubscribeUrl) !== '';
+
+    $html = '';
+    $html .= '<!doctype html><html lang="fr"><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#ffffff;">';
+    $html .= '<div style="max-width:640px;margin:0 auto;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#111;line-height:1.5;">';
+    $html .= '<div style="font-size:14px;letter-spacing:0.02em;text-transform:uppercase;color:#444;">Journal de Simone Sixx</div>';
+    if ($titleEsc !== '') {
+        $html .= '<h1 style="margin:10px 0 4px;font-size:22px;line-height:1.25;font-weight:700;">' . $titleEsc . '</h1>';
+    }
+    if ($dateEsc !== '') {
+        $html .= '<div style="font-size:13px;color:#666;margin-bottom:16px;">' . $dateEsc . '</div>';
+    } else {
+        $html .= '<div style="margin-bottom:16px;"></div>';
+    }
+    if ($excerptEsc !== '') {
+        $html .= '<p style="margin:0 0 18px;font-size:15px;color:#222;">' . nl2br($excerptEsc) . '</p>';
+    }
+    $html .= '<div style="margin:18px 0 22px;">';
+    $html .= '<a href="' . $urlEsc . '" style="display:inline-block;padding:12px 16px;text-decoration:none;border:1px solid #111;color:#111;font-size:14px;">Lire l\'article</a>';
+    $html .= '</div>';
+    $html .= '<div style="border-top:1px solid #eee;margin-top:22px;padding-top:14px;font-size:12px;color:#666;">';
+    $html .= '<div style="margin-bottom:8px;">Simone Sixx</div>';
+    if ($hasUnsub) {
+        $html .= '<div>Se désabonner : <a href="' . $unsubEsc . '" style="color:#111;">' . $unsubEsc . '</a></div>';
+    }
+    $html .= '</div>';
+    $html .= '</div></body></html>';
+    return $html;
+}
+
+function send_email(
+    string $to,
+    string $subject,
+    string $textBody,
+    ?string $htmlBody,
+    string $fromHeader,
+    string $returnPath,
+    ?string $replyTo = null,
+    ?string $listUnsubscribeUrl = null
+): bool {
     $headers = [];
     $headers[] = 'MIME-Version: 1.0';
-    $headers[] = 'Content-Type: text/plain; charset=utf-8';
-    $headers[] = 'From: ' . $from;
-    $headers[] = 'Return-Path: ' . $from;
+    $headers[] = 'From: ' . $fromHeader;
+    $headers[] = 'Return-Path: ' . $returnPath;
     if (is_string($replyTo) && $replyTo !== '') {
         $headers[] = 'Reply-To: ' . $replyTo;
     }
+    if (is_string($listUnsubscribeUrl) && trim($listUnsubscribeUrl) !== '') {
+        $headers[] = 'List-Unsubscribe: <' . trim($listUnsubscribeUrl) . '>';
+    }
+
+    $textBody = normalize_eol($textBody);
+
+    if (!is_string($htmlBody) || trim($htmlBody) === '') {
+        $headers[] = 'Content-Type: text/plain; charset=utf-8';
+        $headersStr = implode("\r\n", $headers);
+        return (bool)@mail($to, $subject, $textBody, $headersStr, '-f' . $returnPath);
+    }
+
+    $htmlBody = normalize_eol($htmlBody);
+
+    $boundary = 'simone_' . bin2hex(function_exists('random_bytes') ? random_bytes(12) : (string)uniqid('', true));
+    $headers[] = 'Content-Type: multipart/alternative; boundary="' . $boundary . '"';
 
     $headersStr = implode("\r\n", $headers);
 
-    $envelopeFrom = null;
-    if (preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]+$/', $from)) {
-        $envelopeFrom = $from;
-    }
+    $msg = '';
+    $msg .= "--{$boundary}\r\n";
+    $msg .= "Content-Type: text/plain; charset=utf-8\r\n";
+    $msg .= "Content-Transfer-Encoding: 8bit\r\n\r\n";
+    $msg .= $textBody . "\r\n\r\n";
+    $msg .= "--{$boundary}\r\n";
+    $msg .= "Content-Type: text/html; charset=utf-8\r\n";
+    $msg .= "Content-Transfer-Encoding: 8bit\r\n\r\n";
+    $msg .= $htmlBody . "\r\n\r\n";
+    $msg .= "--{$boundary}--\r\n";
 
-    if ($envelopeFrom !== null) {
-        return (bool)@mail($to, $subject, $body, $headersStr, '-f' . $envelopeFrom);
-    }
-
-    return (bool)@mail($to, $subject, $body, $headersStr);
+    return (bool)@mail($to, $subject, $msg, $headersStr, '-f' . $returnPath);
 }
 
 function load_subscriber_emails(string $path): array {
@@ -250,12 +362,20 @@ if ($url === '') {
 $force = ($payload['force'] ?? null) === true || (string)($payload['force'] ?? '') === '1';
 $dryRun = ($payload['dry_run'] ?? null) === true || (string)($payload['dry_run'] ?? '') === '1';
 
-$emailFrom = is_string($config['email_from'] ?? null) ? trim((string)$config['email_from']) : '';
-if ($emailFrom === '') {
-    $emailFrom = getenv('NEWSLETTER_EMAIL_FROM') ?: '';
+$emailFromRaw = is_string($config['email_from'] ?? null) ? trim((string)$config['email_from']) : '';
+if ($emailFromRaw === '') {
+    $emailFromRaw = getenv('NEWSLETTER_EMAIL_FROM') ?: '';
 }
-if ($emailFrom === '') {
-    json_response(501, ['ok' => false, 'error' => 'Newsletter sender not configured (email_from / NEWSLETTER_EMAIL_FROM)']);
+
+$emailFromName = is_string($config['email_from_name'] ?? null) ? trim((string)$config['email_from_name']) : null;
+if ($emailFromName === null || $emailFromName === '') {
+    $n = getenv('NEWSLETTER_EMAIL_FROM_NAME') ?: '';
+    $emailFromName = $n !== '' ? $n : null;
+}
+
+[$fromHeader, $returnPath] = parse_from_header($emailFromRaw, $emailFromName);
+if (!is_string($returnPath) || $returnPath === '') {
+    json_response(501, ['ok' => false, 'error' => 'Newsletter sender not configured (email_from must be a valid email)']);
 }
 
 $replyTo = is_string($config['reply_to'] ?? null) ? trim((string)$config['reply_to']) : null;
@@ -373,14 +493,15 @@ foreach ($batch as $emailTo) {
         $unsubscribeUrl = $unsubscribeBase . '?e=' . rawurlencode($emailNorm) . '&sig=' . rawurlencode($sig);
     }
 
-    $body = build_article_email_body($article, $url, $unsubscribeUrl);
+    $textBody = build_article_email_body($article, $url, $unsubscribeUrl);
+    $htmlBody = build_article_email_html($article, $url, $unsubscribeUrl);
 
     if ($dryRun) {
         $sentNow += 1;
         continue;
     }
 
-    $ok = send_email($emailTo, $subject, $body, $emailFrom, $replyTo);
+    $ok = send_email($emailTo, $subject, $textBody, $htmlBody, $fromHeader, $returnPath, $replyTo, $unsubscribeUrl);
     if ($ok) {
         $sentNow += 1;
     } else {
