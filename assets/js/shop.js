@@ -16,6 +16,13 @@ function formatEUR(value) {
 // Free shipping threshold (products subtotal) in cents.
 const SIMONE_FREE_SHIPPING_THRESHOLD_CENTS = 9000;
 
+function updateFreeShippingNote() {
+  const el = document.getElementById("freeShippingNote");
+  if (!el) return;
+  const threshold = formatEUR(centsToEuros(SIMONE_FREE_SHIPPING_THRESHOLD_CENTS));
+  el.textContent = `Livraison offerte dès ${threshold}.`;
+}
+
 // Public rates (not secrets). Keep in sync with your server-side shipping brackets.
 // Amounts are in cents.
 const SIMONE_MR_RATES = [
@@ -162,6 +169,8 @@ function updateCartTotalsDisplay(cart, subtotalCents) {
   if (subtotalEl) subtotalEl.textContent = formatEUR(centsToEuros(subtotal));
   if (shippingEl) shippingEl.textContent = formatEUR(centsToEuros(shippingCents));
   totalEl.textContent = formatEUR(centsToEuros(totalCents));
+
+  updateFreeShippingNote();
 }
 
 

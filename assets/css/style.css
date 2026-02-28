@@ -888,6 +888,14 @@ body.home .site-footer {
   accent-color: black;
 }
 
+.checkout-shipping-note {
+  margin-top: 12px;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  opacity: 0.6;
+  line-height: 1.45;
+}
+
 .checkout-mr {
   margin-top: 18px;
   padding-top: 10px;
