@@ -972,24 +972,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const finalImages = Array.from(new Set([image, ...images].filter(Boolean)));
-
     if (!id || !title || !date) {
       alert("Merci de remplir au minimum : ID, Titre, Date.");
       return;
     }
 
-    if (!image && finalImages.length === 0) {
-      const proceed = confirm("Aucune image renseignée. Continuer quand même ?");
-      if (!proceed) return;
-    }
+    const uniqueImages = Array.from(new Set(images));
 
     const article = {
       id,
       title,
       date,
-      image: image || (finalImages[0] || ""),
-      images: finalImages,
+      image: image,
+      images: uniqueImages,
       excerpt,
       content
     };

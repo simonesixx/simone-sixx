@@ -260,6 +260,18 @@
       .map((src) => normalizeImageSrc(src, prefix))
       .filter(Boolean);
 
+    if (carouselContainer) {
+      carouselContainer.style.display = normalizedImages.length > 0 ? "" : "none";
+    }
+
+    if (normalizedImages.length === 0) {
+      if (carouselNav) carouselNav.innerHTML = "";
+      if (typeof window.updateCartCount === "function") {
+        window.updateCartCount();
+      }
+      return;
+    }
+
     let currentImageIndex = 0;
 
     function goToSlide(index) {
@@ -281,10 +293,8 @@
       goToSlide(currentImageIndex - 1);
     }
 
-    if (normalizedImages.length > 0) {
-      imageEl.src = normalizedImages[0];
-      imageEl.alt = article.title || "";
-    }
+    imageEl.src = normalizedImages[0];
+    imageEl.alt = article.title || "";
 
     if (carouselNav) carouselNav.innerHTML = "";
 
