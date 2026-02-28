@@ -14,7 +14,7 @@ if (PHP_SAPI !== 'cli') {
 
 @set_time_limit(55);
 
-define('SIMONE_NEWSLETTER_CRON_VERSION', '2026-02-27-01');
+define('SIMONE_NEWSLETTER_CRON_VERSION', '2026-02-28-01');
 
 function safe_job_id(string $id): string {
     $id = trim($id);
