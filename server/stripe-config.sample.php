@@ -55,6 +55,10 @@ return [
     // Keep at 0 if you prefer to never overcharge by mistake.
     'default_weight_grams' => 0,
 
+    // Optional: free shipping threshold (products subtotal, in cents).
+    // Example: 9000 means free shipping from 90.00 EUR.
+    'free_shipping_threshold_cents' => 9000,
+
     // Mondial Relay shipping brackets (France only in this project).
     // First matching bracket where weight <= max_weight_grams is used.
     // amount_cents is the shipping price in cents.

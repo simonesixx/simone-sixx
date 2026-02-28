@@ -101,6 +101,70 @@ function compute_cart_weight_grams(array $lineItems, array $config): int {
     return $total;
 }
 
+function stripe_fetch_price_unit_amount_cents(string $priceId, string $secretKey): ?int {
+    $priceId = trim($priceId);
+    if ($priceId === '') return null;
+    if (!str_starts_with($priceId, 'price_')) return null;
+
+    $ch = curl_init('https://api.stripe.com/v1/prices/' . rawurlencode($priceId));
+    if ($ch === false) return null;
+
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_NOSIGNAL => 1,
+        CURLOPT_CONNECTTIMEOUT => 2,
+        CURLOPT_TIMEOUT => 4,
+        CURLOPT_IPRESOLVE => defined('CURL_IPRESOLVE_V4') ? CURL_IPRESOLVE_V4 : 0,
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Bearer ' . $secretKey,
+            'Content-Type: application/x-www-form-urlencoded',
+            'Expect:',
+        ],
+    ]);
+
+    if (defined('CURL_HTTP_VERSION_1_1')) {
+        curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+    }
+
+    $resp = curl_exec($ch);
+    $http = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if (!is_string($resp) || $resp === '' || $http < 200 || $http >= 300) return null;
+    $data = json_decode($resp, true);
+    if (!is_array($data)) return null;
+
+    $amount = $data['unit_amount'] ?? null;
+    if (is_int($amount) && $amount >= 0) return $amount;
+    if (is_numeric($amount)) {
+        $a = (int)$amount;
+        return $a >= 0 ? $a : null;
+    }
+    return null;
+}
+
+function compute_cart_subtotal_cents_via_stripe(array $lineItems, string $secretKey): ?int {
+    // Cache by price id to avoid repeated API calls.
+    $cache = [];
+    $total = 0;
+    foreach ($lineItems as $li) {
+        if (!is_array($li)) continue;
+        $priceId = $li['price'] ?? null;
+        if (!is_string($priceId) || trim($priceId) === '') continue;
+        $qty = (int)($li['quantity'] ?? 1);
+        if ($qty < 1) $qty = 1;
+
+        $pid = trim($priceId);
+        if (!array_key_exists($pid, $cache)) {
+            $cache[$pid] = stripe_fetch_price_unit_amount_cents($pid, $secretKey);
+        }
+        $unit = $cache[$pid];
+        if ($unit === null) return null;
+        $total += ($unit * $qty);
+    }
+    return $total;
+}
+
 function compute_mondial_relay_shipping_cents(int $weightGrams, array $config): ?int {
     $rates = $config['mondial_relay_rates'] ?? null;
     if (!is_array($rates) || count($rates) === 0) return null;
@@ -473,6 +537,15 @@ foreach ($items as $item) {
 // Optional: Mondial Relay shipping line chosen on-site.
 $cartWeightGrams = null;
 $mrShippingCents = null;
+$cartSubtotalCents = null;
+$freeShippingThresholdCents = (int)($config['free_shipping_threshold_cents'] ?? 0);
+if ($freeShippingThresholdCents < 0) $freeShippingThresholdCents = 0;
+
+if ($freeShippingThresholdCents > 0) {
+    $cartSubtotalCents = compute_cart_subtotal_cents_via_stripe($lineItems, $secretKey);
+}
+
+$isFreeShipping = ($freeShippingThresholdCents > 0 && $cartSubtotalCents !== null && $cartSubtotalCents >= $freeShippingThresholdCents);
 if ($shippingMethod === 'mondial_relay') {
     if (!is_array($mondialRelay)) {
         json_response(400, ['error' => 'Missing Mondial Relay Point Relais selection']);
@@ -495,22 +568,24 @@ if ($shippingMethod === 'mondial_relay') {
         : 'eur';
 
     $cartWeightGrams = compute_cart_weight_grams($lineItems, $config);
-    $mrShippingCents = compute_mondial_relay_shipping_cents($cartWeightGrams, $config);
+    $mrShippingCents = $isFreeShipping ? 0 : compute_mondial_relay_shipping_cents($cartWeightGrams, $config);
     if ($mrShippingCents === null) {
         append_checkout_log(['req_id' => $reqId, 'stage' => 'mr_missing_rates']);
         json_response(500, ['error' => 'Mondial Relay shipping is not configured (missing mondial_relay_rates).']);
     }
 
-    $lineItems[] = [
-        'price_data' => [
-            'currency' => $currency,
-            'product_data' => [
-                'name' => 'Livraison Mondial Relay (Point Relais)',
+    if ((int)$mrShippingCents > 0) {
+        $lineItems[] = [
+            'price_data' => [
+                'currency' => $currency,
+                'product_data' => [
+                    'name' => 'Livraison Mondial Relay (Point Relais)',
+                ],
+                'unit_amount' => (int)$mrShippingCents,
             ],
-            'unit_amount' => (int)$mrShippingCents,
-        ],
-        'quantity' => 1,
-    ];
+            'quantity' => 1,
+        ];
+    }
 }
 
 // Optional: home delivery shipping line chosen on-site.
@@ -521,7 +596,7 @@ if ($shippingMethod === 'home') {
         : 'eur';
 
     $cartWeightGrams = compute_cart_weight_grams($lineItems, $config);
-    $homeShippingCents = compute_home_shipping_cents($cartWeightGrams, $config);
+    $homeShippingCents = $isFreeShipping ? 0 : compute_home_shipping_cents($cartWeightGrams, $config);
     if ($homeShippingCents === null) {
         // If not configured, default to 0 to avoid blocking checkout.
         $homeShippingCents = 0;
@@ -586,6 +661,13 @@ $params = [
 // Attach minimal metadata for fulfillment (also visible in webhook payload).
 $metadata = [];
 $metadata['shipping_method'] = $shippingMethod;
+if ($cartSubtotalCents !== null) {
+    $metadata['cart_subtotal_cents'] = (string)$cartSubtotalCents;
+}
+if ($freeShippingThresholdCents > 0) {
+    $metadata['free_shipping_threshold_cents'] = (string)$freeShippingThresholdCents;
+    $metadata['is_free_shipping'] = $isFreeShipping ? '1' : '0';
+}
 if ($shippingMethod === 'mondial_relay') {
     $metadata['cart_weight_grams'] = $cartWeightGrams !== null ? (string)$cartWeightGrams : '';
     $metadata['mr_shipping_cents'] = $mrShippingCents !== null ? (string)$mrShippingCents : '';

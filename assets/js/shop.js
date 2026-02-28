@@ -13,6 +13,9 @@ function formatEUR(value) {
 // LIVRAISON (ESTIMATION PANIER)
 // ======================
 
+// Free shipping threshold (products subtotal) in cents.
+const SIMONE_FREE_SHIPPING_THRESHOLD_CENTS = 9000;
+
 // Public rates (not secrets). Keep in sync with your server-side shipping brackets.
 // Amounts are in cents.
 const SIMONE_MR_RATES = [
@@ -147,13 +150,16 @@ function updateCartTotalsDisplay(cart, subtotalCents) {
 
   const method = getSelectedShippingMethod();
   const weightGrams = computeCartWeightGrams(cart);
-  const shippingCents = method === "mondial_relay"
+  const rawShippingCents = method === "mondial_relay"
     ? computeShippingCentsFromRates(weightGrams, SIMONE_MR_RATES)
     : computeShippingCentsFromRates(weightGrams, SIMONE_HOME_RATES);
 
-  const totalCents = Math.max(0, (Number(subtotalCents) || 0) + shippingCents);
+  const subtotal = Math.max(0, Number(subtotalCents) || 0);
+  const shippingCents = subtotal >= SIMONE_FREE_SHIPPING_THRESHOLD_CENTS ? 0 : rawShippingCents;
 
-  if (subtotalEl) subtotalEl.textContent = formatEUR(centsToEuros(Math.max(0, Number(subtotalCents) || 0)));
+  const totalCents = Math.max(0, subtotal + shippingCents);
+
+  if (subtotalEl) subtotalEl.textContent = formatEUR(centsToEuros(subtotal));
   if (shippingEl) shippingEl.textContent = formatEUR(centsToEuros(shippingCents));
   totalEl.textContent = formatEUR(centsToEuros(totalCents));
 }
