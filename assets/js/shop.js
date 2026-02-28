@@ -298,18 +298,80 @@ function updateCartTotalsDisplay(cart, subtotalCents) {
 // PANIER (GLOBAL)
 // ======================
 
+function getCartStorage() {
+  // sessionStorage: cleared when the tab/window is closed ("quit the site").
+  // Fallback to localStorage if sessionStorage is unavailable.
+  try {
+    if (typeof window !== "undefined" && window.sessionStorage) return window.sessionStorage;
+  } catch {
+    // ignore
+  }
+  try {
+    if (typeof window !== "undefined" && window.localStorage) return window.localStorage;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 function loadCart() {
   try {
-    const raw = localStorage.getItem("cart");
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    const storage = getCartStorage();
+    if (!storage) return [];
+
+    // Primary: sessionStorage
+    const raw = storage.getItem("cart");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    }
+
+    // One-time migration: if an old persistent cart exists, move it to sessionStorage.
+    let legacyRaw = null;
+    try {
+      legacyRaw = window.localStorage ? window.localStorage.getItem("cart") : null;
+    } catch {
+      legacyRaw = null;
+    }
+    if (legacyRaw) {
+      const legacyParsed = JSON.parse(legacyRaw);
+      const legacyCart = Array.isArray(legacyParsed) ? legacyParsed : [];
+      try {
+        if (storage && storage !== window.localStorage) {
+          storage.setItem("cart", JSON.stringify(legacyCart));
+        }
+      } catch {
+        // ignore
+      }
+      try {
+        if (window.localStorage) window.localStorage.removeItem("cart");
+      } catch {
+        // ignore
+      }
+      return legacyCart;
+    }
+
+    return [];
   } catch {
     return [];
   }
 }
 
 function saveCart(cart) {
-  localStorage.setItem("cart", JSON.stringify(Array.isArray(cart) ? cart : []));
+  const storage = getCartStorage();
+  const payload = JSON.stringify(Array.isArray(cart) ? cart : []);
+  try {
+    if (storage) storage.setItem("cart", payload);
+  } catch {
+    // ignore
+  }
+
+  // Ensure we don't leave a persistent cart behind.
+  try {
+    if (window.localStorage) window.localStorage.removeItem("cart");
+  } catch {
+    // ignore
+  }
 }
 
 function updateCartCount() {
