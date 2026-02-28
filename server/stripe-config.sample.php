@@ -39,4 +39,29 @@ return [
 
     // Optional: allow promo codes in Checkout
     'allow_promotion_codes' => true,
+
+    // Currency used for dynamic line items (ex: shipping). Must match your Stripe Prices currency.
+    // Example: 'eur'
+    'currency' => 'eur',
+
+    // Optional: weight mapping (grams) per Stripe Price ID, used to compute shipping brackets.
+    // Fill this with your real Price IDs.
+    // Example: ['price_123' => 250, 'price_456' => 900]
+    'weights_by_price_id' => [
+        // 'price_...' => 0,
+    ],
+
+    // Used when a cart item has no mapping in weights_by_price_id.
+    // Keep at 0 if you prefer to never overcharge by mistake.
+    'default_weight_grams' => 0,
+
+    // Mondial Relay shipping brackets (France only in this project).
+    // First matching bracket where weight <= max_weight_grams is used.
+    // amount_cents is the shipping price in cents.
+    'mondial_relay_rates' => [
+        // ['max_weight_grams' => 500,  'amount_cents' => 495],
+        // ['max_weight_grams' => 1000, 'amount_cents' => 595],
+        // ['max_weight_grams' => 2000, 'amount_cents' => 695],
+        // ['max_weight_grams' => null, 'amount_cents' => 895], // open-ended
+    ],
 ];

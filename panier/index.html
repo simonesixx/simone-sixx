@@ -124,6 +124,54 @@
             <input id="checkoutCity" type="text" autocomplete="shipping address-level2" placeholder="Paris" required>
           </div>
         </div>
+
+        <div class="checkout-shipping" aria-label="Mode de livraison">
+          <label>Livraison</label>
+
+          <div class="checkout-shipping-options" role="radiogroup" aria-label="Choisir un mode de livraison">
+            <label class="checkout-shipping-option">
+              <input type="radio" name="shippingMethod" value="home" checked>
+              Livraison à domicile
+            </label>
+            <label class="checkout-shipping-option">
+              <input type="radio" name="shippingMethod" value="mondial_relay">
+              Mondial Relay — Point Relais
+            </label>
+          </div>
+
+          <div id="mrRelayBox" class="checkout-mr" hidden>
+            <div
+              id="mrWidgetZone"
+              class="mr-widget-zone"
+              data-mr-brand="CC23UIQ0"
+              data-mr-collivmod="24R"
+              aria-label="Sélection Point Relais Mondial Relay"
+            ></div>
+            <!-- À configurer: mets ton code Mondial Relay "Enseigne" dans data-mr-brand (ex: data-mr-brand="XXXXXX"). -->
+
+            <label for="mrRelayName">Point Relais sélectionné</label>
+            <input id="mrRelayName" type="text" autocomplete="off" placeholder="Sélectionne un Point Relais ci-dessus" readonly>
+
+            <label for="mrRelayAddress">Adresse</label>
+            <input id="mrRelayAddress" type="text" autocomplete="off" placeholder="" readonly>
+
+            <div class="checkout-contact-row">
+              <div>
+                <label for="mrRelayPostal">Code postal</label>
+                <input id="mrRelayPostal" type="text" inputmode="numeric" autocomplete="off" placeholder="" readonly>
+              </div>
+              <div>
+                <label for="mrRelayCity">Ville</label>
+                <input id="mrRelayCity" type="text" autocomplete="off" placeholder="" readonly>
+              </div>
+            </div>
+
+            <label for="mrRelayId">Identifiant Point Relais</label>
+            <input id="mrRelayId" type="text" autocomplete="off" placeholder="" readonly>
+
+            <p class="checkout-mr-hint">Le Point Relais est enregistré pour l’expédition.</p>
+          </div>
+        </div>
       </div>
     </aside>
   </div>
@@ -183,6 +231,12 @@
 
   </div>
 </div>
+
+<!-- Mondial Relay widget deps (cart page only) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://widget.mondialrelay.com/parcelshop-picker/jquery.plugin.mondialrelay.parcelshoppicker.min.js"></script>
 
 </body>
 </html>

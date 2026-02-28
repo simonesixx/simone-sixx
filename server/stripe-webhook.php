@@ -290,6 +290,8 @@ $firstWrite = false;
 if (!is_array($order)) {
     $firstWrite = true;
 
+    $metadata = is_array($session['metadata'] ?? null) ? $session['metadata'] : null;
+
     // Fetch line items from Stripe for a complete packing slip.
     $lineItems = [];
     try {
@@ -364,6 +366,7 @@ if (!is_array($order)) {
         'payment_status' => $session['payment_status'] ?? null,
         'amount_total' => $session['amount_total'] ?? null,
         'currency' => $session['currency'] ?? null,
+        'metadata' => $metadata,
         'customer' => $customer,
         'line_items' => $lineItems,
         'stored_at' => gmdate('c'),
@@ -428,6 +431,22 @@ if ($emailTo !== '' && empty($order['email_sent'])) {
     if ($shipName !== '') $lines[] = '  Nom: ' . $shipName;
     foreach (address_to_lines($shipAddr) as $l) {
         $lines[] = '  ' . $l;
+    }
+
+    $meta = is_array($order['metadata'] ?? null) ? $order['metadata'] : null;
+    $shipMethod = is_array($meta) && is_string($meta['shipping_method'] ?? null) ? (string)$meta['shipping_method'] : '';
+    if ($shipMethod === 'mondial_relay') {
+        $mrName = is_string($meta['mr_name'] ?? null) ? (string)$meta['mr_name'] : '';
+        $mrAddr = is_string($meta['mr_address'] ?? null) ? (string)$meta['mr_address'] : '';
+        $mrPostal = is_string($meta['mr_postal_code'] ?? null) ? (string)$meta['mr_postal_code'] : '';
+        $mrCity = is_string($meta['mr_city'] ?? null) ? (string)$meta['mr_city'] : '';
+        $mrId = is_string($meta['mr_id'] ?? null) ? (string)$meta['mr_id'] : '';
+        $lines[] = '';
+        $lines[] = 'Point Relais (Mondial Relay):';
+        if ($mrName !== '') $lines[] = '  Nom: ' . $mrName;
+        if ($mrAddr !== '') $lines[] = '  Adresse: ' . $mrAddr;
+        if ($mrPostal !== '' || $mrCity !== '') $lines[] = '  Ville: ' . trim($mrPostal . ' ' . $mrCity);
+        if ($mrId !== '') $lines[] = '  ID: ' . $mrId;
     }
     $lines[] = '';
     $lines[] = 'Articles:';

@@ -75,6 +75,81 @@ function json_response(int $status, array $payload): void {
     exit;
 }
 
+function normalize_string($value): ?string {
+    if (!is_string($value)) return null;
+    $s = trim($value);
+    return $s === '' ? null : $s;
+}
+
+function compute_cart_weight_grams(array $lineItems, array $config): int {
+    $weights = $config['weights_by_price_id'] ?? null;
+    $defaultWeight = (int)($config['default_weight_grams'] ?? 0);
+    if (!is_array($weights)) $weights = [];
+    if ($defaultWeight < 0) $defaultWeight = 0;
+
+    $total = 0;
+    foreach ($lineItems as $li) {
+        if (!is_array($li)) continue;
+        $priceId = $li['price'] ?? null;
+        if (!is_string($priceId) || $priceId === '') continue;
+        $qty = (int)($li['quantity'] ?? 1);
+        if ($qty < 1) $qty = 1;
+        $w = isset($weights[$priceId]) ? (int)$weights[$priceId] : $defaultWeight;
+        if ($w < 0) $w = 0;
+        $total += ($w * $qty);
+    }
+    return $total;
+}
+
+function compute_mondial_relay_shipping_cents(int $weightGrams, array $config): ?int {
+    $rates = $config['mondial_relay_rates'] ?? null;
+    if (!is_array($rates) || count($rates) === 0) return null;
+
+    $normalized = [];
+    foreach ($rates as $row) {
+        if (!is_array($row)) continue;
+        $max = $row['max_weight_grams'] ?? null;
+        $amount = $row['amount_cents'] ?? null;
+        if (!is_int($amount)) {
+            $amount = is_numeric($amount) ? (int)$amount : null;
+        }
+        if ($amount === null || $amount < 0) continue;
+
+        $maxInt = null;
+        if ($max !== null) {
+            $maxInt = is_numeric($max) ? (int)$max : null;
+            if ($maxInt !== null && $maxInt <= 0) $maxInt = null;
+        }
+
+        $normalized[] = ['max' => $maxInt, 'amount' => $amount];
+    }
+
+    if (count($normalized) === 0) return null;
+
+    usort($normalized, function ($a, $b) {
+        $am = $a['max'];
+        $bm = $b['max'];
+        if ($am === null && $bm === null) return 0;
+        if ($am === null) return 1;
+        if ($bm === null) return -1;
+        return $am <=> $bm;
+    });
+
+    foreach ($normalized as $row) {
+        $max = $row['max'];
+        if ($max === null) continue;
+        if ($weightGrams <= $max) {
+            return (int)$row['amount'];
+        }
+    }
+
+    // Fallback: open-ended rate (max=null) if provided, else the last bracket.
+    foreach ($normalized as $row) {
+        if ($row['max'] === null) return (int)$row['amount'];
+    }
+    return (int)$normalized[count($normalized) - 1]['amount'];
+}
+
 function load_config(): array {
     $default = [
         'stripe_secret_key' => getenv('STRIPE_SECRET_KEY') ?: '',
@@ -231,6 +306,17 @@ if (!is_array($shipping)) {
     $shipping = null;
 }
 
+$shippingMethod = $payload['shipping_method'] ?? null;
+$shippingMethod = normalize_string($shippingMethod) ?? 'home';
+if ($shippingMethod !== 'home' && $shippingMethod !== 'mondial_relay') {
+    $shippingMethod = 'home';
+}
+
+$mondialRelay = $payload['mondial_relay'] ?? null;
+if (!is_array($mondialRelay)) {
+    $mondialRelay = null;
+}
+
 $items = $payload['items'] ?? null;
 if (!is_array($items) || count($items) === 0) {
     append_checkout_log(['req_id' => $reqId, 'stage' => 'empty_cart']);
@@ -335,6 +421,49 @@ foreach ($items as $item) {
     ];
 }
 
+// Optional: Mondial Relay shipping line chosen on-site.
+$cartWeightGrams = null;
+$mrShippingCents = null;
+if ($shippingMethod === 'mondial_relay') {
+    if (!is_array($mondialRelay)) {
+        json_response(400, ['error' => 'Missing Mondial Relay Point Relais selection']);
+    }
+
+    $mrName = normalize_string($mondialRelay['name'] ?? null);
+    $mrAddress = normalize_string($mondialRelay['address'] ?? null);
+    $mrPostal = normalize_string($mondialRelay['postal_code'] ?? null);
+    $mrCity = normalize_string($mondialRelay['city'] ?? null);
+    $mrCountry = normalize_string($mondialRelay['country'] ?? null) ?? 'FR';
+    if ($mrName === null || $mrAddress === null || $mrPostal === null || $mrCity === null) {
+        json_response(400, ['error' => 'Invalid Mondial Relay Point Relais (missing fields)']);
+    }
+    if (strtoupper($mrCountry) !== 'FR') {
+        json_response(400, ['error' => 'Mondial Relay is only available for France']);
+    }
+
+    $currency = is_string($config['currency'] ?? null) && trim((string)$config['currency']) !== ''
+        ? strtolower(trim((string)$config['currency']))
+        : 'eur';
+
+    $cartWeightGrams = compute_cart_weight_grams($lineItems, $config);
+    $mrShippingCents = compute_mondial_relay_shipping_cents($cartWeightGrams, $config);
+    if ($mrShippingCents === null) {
+        append_checkout_log(['req_id' => $reqId, 'stage' => 'mr_missing_rates']);
+        json_response(500, ['error' => 'Mondial Relay shipping is not configured (missing mondial_relay_rates).']);
+    }
+
+    $lineItems[] = [
+        'price_data' => [
+            'currency' => $currency,
+            'product_data' => [
+                'name' => 'Livraison Mondial Relay (Point Relais)',
+            ],
+            'unit_amount' => (int)$mrShippingCents,
+        ],
+        'quantity' => 1,
+    ];
+}
+
 if (count($lineItems) === 0) {
     json_response(400, ['error' => 'No valid items']);
 }
@@ -376,6 +505,32 @@ $params = [
     'cancel_url' => $cancelUrl,
     'line_items' => $lineItems,
 ];
+
+// Attach minimal metadata for fulfillment (also visible in webhook payload).
+$metadata = [];
+$metadata['shipping_method'] = $shippingMethod;
+if ($shippingMethod === 'mondial_relay') {
+    $metadata['cart_weight_grams'] = $cartWeightGrams !== null ? (string)$cartWeightGrams : '';
+    $metadata['mr_shipping_cents'] = $mrShippingCents !== null ? (string)$mrShippingCents : '';
+
+    if (is_array($mondialRelay)) {
+        $metadata['mr_id'] = (string)($mondialRelay['id'] ?? '');
+        $metadata['mr_name'] = (string)($mondialRelay['name'] ?? '');
+        $metadata['mr_address'] = (string)($mondialRelay['address'] ?? '');
+        $metadata['mr_postal_code'] = (string)($mondialRelay['postal_code'] ?? '');
+        $metadata['mr_city'] = (string)($mondialRelay['city'] ?? '');
+        $metadata['mr_country'] = (string)($mondialRelay['country'] ?? 'FR');
+    }
+}
+
+// Stripe expects scalar metadata values.
+$params['metadata'] = array_map(function ($v) {
+    if ($v === null) return '';
+    if (is_bool($v)) return $v ? '1' : '0';
+    if (is_scalar($v)) return (string)$v;
+    $j = json_encode($v, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    return is_string($j) ? $j : '';
+}, $metadata);
 
 // Stripe Checkout collection for phone triggered timeouts on this hosting.
 // Alternative: create a Stripe Customer with contact/shipping and attach it to the session.

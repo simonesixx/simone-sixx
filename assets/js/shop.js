@@ -371,6 +371,24 @@ async function checkout(buttonEl) {
   const postal = postalInput && typeof postalInput.value === "string" ? postalInput.value.trim() : "";
   const city = cityInput && typeof cityInput.value === "string" ? cityInput.value.trim() : "";
 
+  const shippingMethodEl = document.querySelector('input[name="shippingMethod"]:checked');
+  const shippingMethod = shippingMethodEl && typeof shippingMethodEl.value === "string" ? String(shippingMethodEl.value || "").trim() : "home";
+
+  const mrRelayNameInput = document.getElementById("mrRelayName");
+  const mrRelayAddressInput = document.getElementById("mrRelayAddress");
+  const mrRelayPostalInput = document.getElementById("mrRelayPostal");
+  const mrRelayCityInput = document.getElementById("mrRelayCity");
+  const mrRelayIdInput = document.getElementById("mrRelayId");
+
+  const mrRelay = {
+    id: mrRelayIdInput && typeof mrRelayIdInput.value === "string" ? mrRelayIdInput.value.trim() : "",
+    name: mrRelayNameInput && typeof mrRelayNameInput.value === "string" ? mrRelayNameInput.value.trim() : "",
+    address: mrRelayAddressInput && typeof mrRelayAddressInput.value === "string" ? mrRelayAddressInput.value.trim() : "",
+    postal_code: mrRelayPostalInput && typeof mrRelayPostalInput.value === "string" ? mrRelayPostalInput.value.trim() : "",
+    city: mrRelayCityInput && typeof mrRelayCityInput.value === "string" ? mrRelayCityInput.value.trim() : "",
+    country: "FR"
+  };
+
   try {
     if (emailInput) localStorage.setItem("checkout_email", email);
     if (nameInput) localStorage.setItem("checkout_name", fullName);
@@ -379,6 +397,10 @@ async function checkout(buttonEl) {
     if (address2Input) localStorage.setItem("checkout_address2", address2);
     if (postalInput) localStorage.setItem("checkout_postal", postal);
     if (cityInput) localStorage.setItem("checkout_city", city);
+    localStorage.setItem("checkout_shipping_method", shippingMethod);
+    if (shippingMethod === "mondial_relay") {
+      localStorage.setItem("mr_relay", JSON.stringify(mrRelay));
+    }
   } catch {
     // ignore
   }
@@ -447,6 +469,45 @@ async function checkout(buttonEl) {
     return;
   }
 
+  if (shippingMethod === "mondial_relay") {
+    if (!mrRelay.name) {
+      alert("Merci d’indiquer le nom du Point Relais.");
+      if (btn) {
+        btn.disabled = false;
+        if (originalLabel != null) btn.textContent = originalLabel;
+      }
+      if (mrRelayNameInput) mrRelayNameInput.focus();
+      return;
+    }
+    if (!mrRelay.address) {
+      alert("Merci d’indiquer l’adresse du Point Relais.");
+      if (btn) {
+        btn.disabled = false;
+        if (originalLabel != null) btn.textContent = originalLabel;
+      }
+      if (mrRelayAddressInput) mrRelayAddressInput.focus();
+      return;
+    }
+    if (!mrRelay.postal_code) {
+      alert("Merci d’indiquer le code postal du Point Relais.");
+      if (btn) {
+        btn.disabled = false;
+        if (originalLabel != null) btn.textContent = originalLabel;
+      }
+      if (mrRelayPostalInput) mrRelayPostalInput.focus();
+      return;
+    }
+    if (!mrRelay.city) {
+      alert("Merci d’indiquer la ville du Point Relais.");
+      if (btn) {
+        btn.disabled = false;
+        if (originalLabel != null) btn.textContent = originalLabel;
+      }
+      if (mrRelayCityInput) mrRelayCityInput.focus();
+      return;
+    }
+  }
+
   // On attend des items avec `stripePriceId` (Price ID Stripe) pour chaque ligne.
   // Ex: price_123...
   const legacyPriceIdMap = new Map([
@@ -508,6 +569,8 @@ async function checkout(buttonEl) {
         customer_phone: phone || undefined,
         customer_email: email || undefined,
         customer_name: fullName || undefined,
+        shipping_method: shippingMethod,
+        mondial_relay: shippingMethod === "mondial_relay" ? mrRelay : undefined,
         shipping: {
           name: fullName,
           address: {
@@ -559,6 +622,197 @@ async function checkout(buttonEl) {
 
 // Expose pour les boutons HTML (onclick)
 window.checkout = checkout;
+
+// Mondial Relay UI (panier uniquement)
+(function setupMondialRelayCartUI() {
+  try {
+    const methodInputs = Array.from(document.querySelectorAll('input[name="shippingMethod"]'));
+    if (methodInputs.length === 0) return;
+
+    const mrBox = document.getElementById("mrRelayBox");
+    if (!mrBox) return;
+
+    function getCheckedMethod() {
+      const el = document.querySelector('input[name="shippingMethod"]:checked');
+      return el && typeof el.value === "string" ? String(el.value || "home") : "home";
+    }
+
+    function setMrRequired(isRequired) {
+      ["mrRelayName", "mrRelayAddress", "mrRelayPostal", "mrRelayCity"].forEach((id) => {
+        const input = document.getElementById(id);
+        if (input) input.required = !!isRequired;
+      });
+    }
+
+    function toggleMr() {
+      const method = getCheckedMethod();
+      const show = method === "mondial_relay";
+      mrBox.hidden = !show;
+      setMrRequired(show);
+
+      if (show) {
+        const cp = document.getElementById("checkoutPostal");
+        const city = document.getElementById("checkoutCity");
+        const mrCp = document.getElementById("mrRelayPostal");
+        const mrCity = document.getElementById("mrRelayCity");
+        if (mrCp && !String(mrCp.value || "").trim() && cp) mrCp.value = String(cp.value || "");
+        if (mrCity && !String(mrCity.value || "").trim() && city) mrCity.value = String(city.value || "");
+
+        initMondialRelayWidget();
+      }
+    }
+
+    let mrWidgetInitialized = false;
+
+    function setMrField(id, value) {
+      const input = document.getElementById(id);
+      if (!input) return;
+      try {
+        input.value = value != null ? String(value) : "";
+      } catch {
+        // ignore
+      }
+    }
+
+    function initMondialRelayWidget() {
+      if (mrWidgetInitialized) return;
+
+      const zone = document.getElementById("mrWidgetZone");
+      if (!zone) return;
+
+      const brand = zone.getAttribute("data-mr-brand") || "";
+      const colLivMod = zone.getAttribute("data-mr-collivmod") || "24R";
+
+      if (!brand || !String(brand).trim()) {
+        zone.innerHTML = "<p style=\"font-size:11px; letter-spacing:0.6px; opacity:0.6; line-height:1.45;\">Mondial Relay n’est pas configuré (code Enseigne manquant).</p>";
+        return;
+      }
+
+      // Wait until jQuery + plugin are available.
+      const $ = window.jQuery;
+      if (!$ || !$.fn || typeof $.fn.MR_ParcelShopPicker !== "function") {
+        setTimeout(initMondialRelayWidget, 150);
+        return;
+      }
+
+      const cp = document.getElementById("checkoutPostal");
+      const city = document.getElementById("checkoutCity");
+      const postal = cp && typeof cp.value === "string" ? cp.value.trim() : "";
+      const cityVal = city && typeof city.value === "string" ? city.value.trim() : "";
+
+      try {
+        $(zone).MR_ParcelShopPicker({
+          Target: "#mrRelayId",
+          Brand: String(brand).trim(),
+          Country: "FR",
+          AllowedCountries: "FR",
+          PostCode: postal || undefined,
+          City: cityVal || undefined,
+          ColLivMod: String(colLivMod || "24R").trim(),
+          NbResults: 7,
+          Responsive: true,
+          ShowResultsOnMap: true,
+          Weight: 1000,
+          OnParcelShopSelected: function (data) {
+            // Widget payload is FR-labelled: ID, Nom, Adresse1/2, CP, Ville, Pays...
+            try {
+              const id = data && data.ID != null ? String(data.ID) : "";
+              const name = data && data.Nom != null ? String(data.Nom) : "";
+              const a1 = data && data.Adresse1 != null ? String(data.Adresse1) : "";
+              const a2 = data && data.Adresse2 != null ? String(data.Adresse2) : "";
+              const addr = (a1 + (a2 ? (" " + a2) : "")).trim();
+              const relayCp = data && data.CP != null ? String(data.CP) : "";
+              const relayCity = data && data.Ville != null ? String(data.Ville) : "";
+
+              setMrField("mrRelayId", id);
+              setMrField("mrRelayName", name);
+              setMrField("mrRelayAddress", addr);
+              setMrField("mrRelayPostal", relayCp);
+              setMrField("mrRelayCity", relayCity);
+
+              try {
+                localStorage.setItem("mr_relay", JSON.stringify({
+                  id,
+                  name,
+                  address: addr,
+                  postal_code: relayCp,
+                  city: relayCity,
+                  country: "FR"
+                }));
+              } catch {
+                // ignore
+              }
+            } catch {
+              // ignore
+            }
+          }
+        });
+
+        mrWidgetInitialized = true;
+      } catch {
+        // ignore
+      }
+    }
+
+    // Restore saved shipping method
+    try {
+      const savedMethod = localStorage.getItem("checkout_shipping_method");
+      if (savedMethod === "mondial_relay" || savedMethod === "home") {
+        const radio = document.querySelector('input[name="shippingMethod"][value="' + savedMethod + '"]');
+        if (radio) radio.checked = true;
+      }
+    } catch {
+      // ignore
+    }
+
+    // Restore relay fields
+    try {
+      const raw = localStorage.getItem("mr_relay");
+      const data = raw ? JSON.parse(raw) : null;
+      if (data && typeof data === "object") {
+        const map = {
+          mrRelayId: data.id,
+          mrRelayName: data.name,
+          mrRelayAddress: data.address,
+          mrRelayPostal: data.postal_code,
+          mrRelayCity: data.city,
+        };
+        Object.entries(map).forEach(([id, val]) => {
+          const input = document.getElementById(id);
+          if (input && val != null && !String(input.value || "").trim()) {
+            input.value = String(val);
+          }
+        });
+      }
+    } catch {
+      // ignore
+    }
+
+    methodInputs.forEach((input) => input.addEventListener("change", () => {
+      try {
+        localStorage.setItem("checkout_shipping_method", getCheckedMethod());
+      } catch {
+        // ignore
+      }
+      toggleMr();
+    }));
+
+    // Re-init / refresh search when postal/city changes.
+    ["checkoutPostal", "checkoutCity"].forEach((id) => {
+      const input = document.getElementById(id);
+      if (!input) return;
+      input.addEventListener("change", () => {
+        if (getCheckedMethod() !== "mondial_relay") return;
+        // If already initialized, we keep it; user can search directly in widget.
+        initMondialRelayWidget();
+      });
+    });
+
+    toggleMr();
+  } catch {
+    // ignore
+  }
+})();
 
 // Prefill checkout inputs (if present)
 try {

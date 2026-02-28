@@ -824,6 +824,44 @@ body.home .site-footer {
   margin-top: 6px;
 }
 
+.checkout-shipping {
+  margin-top: 28px;
+}
+
+.checkout-shipping-options {
+  display: grid;
+  gap: 10px;
+}
+
+.checkout-shipping-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.checkout-shipping-option input {
+  margin: 0;
+}
+
+.checkout-mr {
+  margin-top: 16px;
+}
+
+.mr-widget-zone {
+  margin-top: 12px;
+  margin-bottom: 18px;
+}
+
+.checkout-mr-hint {
+  margin-top: 14px;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  opacity: 0.6;
+  line-height: 1.45;
+}
+
 @media (max-width: 768px) {
   .cart-layout {
     grid-template-columns: 1fr;
