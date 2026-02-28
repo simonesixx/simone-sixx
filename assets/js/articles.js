@@ -38,6 +38,61 @@
       .replace(/'/g, "&#39;");
   }
 
+  function parseArticleDate(dateStr) {
+    const raw = String(dateStr || "").trim();
+    if (!raw) return null;
+
+    // Format: dd/mm/yy or dd/mm/yyyy
+    const mSlash = raw.match(/^\s*(\d{1,2})\s*[\/.-]\s*(\d{1,2})\s*[\/.-]\s*(\d{2,4})\s*$/);
+    if (mSlash) {
+      const day = Number(mSlash[1]);
+      const month = Number(mSlash[2]);
+      let year = Number(mSlash[3]);
+      if (year < 100) year = 2000 + year;
+      if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1970) {
+        return Date.UTC(year, month - 1, day);
+      }
+    }
+
+    // Format: "19 février 2026" (French month names)
+    const mFr = raw
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .match(/^\s*(\d{1,2})\s+([a-zàâäçéèêëîïôöùûüÿ]+)\s+(\d{4})\s*$/i);
+    if (mFr) {
+      const day = Number(mFr[1]);
+      const monthName = String(mFr[2] || "").toLowerCase();
+      const year = Number(mFr[3]);
+
+      const months = {
+        janvier: 1,
+        fevrier: 2,
+        février: 2,
+        mars: 3,
+        avril: 4,
+        mai: 5,
+        juin: 6,
+        juillet: 7,
+        aout: 8,
+        août: 8,
+        septembre: 9,
+        octobre: 10,
+        novembre: 11,
+        decembre: 12,
+        décembre: 12,
+      };
+
+      const month = months[monthName];
+      if (month && day >= 1 && day <= 31 && year >= 1970) {
+        return Date.UTC(year, month - 1, day);
+      }
+    }
+
+    // Fallback: try native parsing (ISO, etc.)
+    const ts = Date.parse(raw);
+    return Number.isFinite(ts) ? ts : null;
+  }
+
   function looksLikeHtml(text) {
     const t = String(text || "");
     // détecte des balises HTML courantes
@@ -118,11 +173,23 @@
     if (!articlesList) return;
 
     const list = await getArticles();
+    const sorted = list
+      .map((a, i) => ({ a, i, ts: parseArticleDate(a?.date) }))
+      .sort((x, y) => {
+        const xt = x.ts;
+        const yt = y.ts;
+        if (xt == null && yt == null) return x.i - y.i;
+        if (xt == null) return 1;
+        if (yt == null) return -1;
+        if (yt !== xt) return yt - xt;
+        return x.i - y.i;
+      })
+      .map((x) => x.a);
     const previewSuffix = getPreviewEnabled() ? "&preview=1" : "";
 
     articlesList.innerHTML = "";
 
-    list.forEach((article, index) => {
+    sorted.forEach((article, index) => {
       const eventEntry = document.createElement("div");
       eventEntry.className = "event-entry";
 
@@ -139,7 +206,7 @@
 
       articlesList.appendChild(eventEntry);
 
-      if (index < list.length - 1) {
+      if (index < sorted.length - 1) {
         const divider = document.createElement("div");
         divider.className = "event-divider";
         articlesList.appendChild(divider);
