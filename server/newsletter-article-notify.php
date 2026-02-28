@@ -44,6 +44,7 @@ function load_config(): array {
         'notify_token' => null,
         'email_from' => null,
         'reply_to' => null,
+        'unsubscribe_secret' => null,
         'storage_path' => __DIR__ . '/newsletter/subscribers.json',
     ];
 
@@ -60,6 +61,25 @@ function load_config(): array {
     }
 
     return $default;
+}
+
+function normalize_email(string $email): string {
+    $email = trim(mb_strtolower($email));
+    $email = trim($email, "<> \t\n\r\0\x0B");
+    return $email;
+}
+
+function request_base_url(): string {
+    $host = (string)($_SERVER['HTTP_HOST'] ?? '');
+    if ($host === '') return '';
+    $https = (string)($_SERVER['HTTPS'] ?? '');
+    $proto = ($https !== '' && $https !== 'off') ? 'https' : 'http';
+    return $proto . '://' . $host;
+}
+
+function unsubscribe_sig(string $secret, string $email): string {
+    $email = normalize_email($email);
+    return hash_hmac('sha256', $email, $secret);
 }
 
 function safe_job_id(string $id): string {
@@ -79,7 +99,7 @@ function encode_subject_utf8(string $subject): string {
     return '=?UTF-8?B?' . $b64 . '?=';
 }
 
-function build_article_email_body(array $article, string $url): string {
+function build_article_email_body(array $article, string $url, ?string $unsubscribeUrl = null): string {
     $title = is_string($article['title'] ?? null) ? trim((string)$article['title']) : '';
     $date = is_string($article['date'] ?? null) ? trim((string)$article['date']) : '';
     $excerpt = is_string($article['excerpt'] ?? null) ? trim((string)$article['excerpt']) : '';
@@ -105,6 +125,12 @@ function build_article_email_body(array $article, string $url): string {
     $lines[] = '';
     $lines[] = '—';
     $lines[] = 'Simone Sixx';
+
+    if (is_string($unsubscribeUrl) && trim($unsubscribeUrl) !== '') {
+        $lines[] = '';
+        $lines[] = 'Se désabonner :';
+        $lines[] = $unsubscribeUrl;
+    }
 
     return implode("\n", $lines);
 }
@@ -324,7 +350,14 @@ $batch = array_slice($jobEmails, $cursor, $batchSize);
 
 $subjectRaw = 'Nouveau Journal — ' . $title;
 $subject = encode_subject_utf8($subjectRaw);
-$body = build_article_email_body($article, $url);
+
+$unsubscribeSecret = is_string($config['unsubscribe_secret'] ?? null) ? trim((string)$config['unsubscribe_secret']) : '';
+if ($unsubscribeSecret === '') {
+    $unsubscribeSecret = getenv('NEWSLETTER_UNSUBSCRIBE_SECRET') ?: '';
+}
+
+$baseUrl = request_base_url();
+$unsubscribeBase = $baseUrl !== '' ? ($baseUrl . '/server/newsletter-unsubscribe.php') : '';
 
 $sentNow = 0;
 $errorsNow = 0;
@@ -332,6 +365,15 @@ $lastError = null;
 
 foreach ($batch as $emailTo) {
     if (!is_string($emailTo) || trim($emailTo) === '') continue;
+
+    $unsubscribeUrl = null;
+    if ($unsubscribeBase !== '' && is_string($unsubscribeSecret) && $unsubscribeSecret !== '') {
+        $emailNorm = normalize_email($emailTo);
+        $sig = unsubscribe_sig($unsubscribeSecret, $emailNorm);
+        $unsubscribeUrl = $unsubscribeBase . '?e=' . rawurlencode($emailNorm) . '&sig=' . rawurlencode($sig);
+    }
+
+    $body = build_article_email_body($article, $url, $unsubscribeUrl);
 
     if ($dryRun) {
         $sentNow += 1;

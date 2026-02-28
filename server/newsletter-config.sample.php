@@ -18,6 +18,10 @@ return [
     // Example: 'journal@simonesixx.com'
     'email_from' => 'CHANGE_ME_SENDER@YOUR_DOMAIN',
 
+    // Secret used to sign unsubscribe links.
+    // Generate a long random token and keep it secret.
+    // 'unsubscribe_secret' => 'CHANGE_ME_LONG_RANDOM_SECRET',
+
     // Base URL of the website (used by the cron script to generate absolute links).
     // Example: 'https://simonesixx.com'
     // 'site_base_url' => 'https://simonesixx.com',
