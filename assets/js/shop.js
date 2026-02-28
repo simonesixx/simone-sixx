@@ -13,13 +13,28 @@ function formatEUR(value) {
 // LIVRAISON (ESTIMATION PANIER)
 // ======================
 
-// Free shipping threshold (products subtotal) in cents.
-const SIMONE_FREE_SHIPPING_THRESHOLD_CENTS = 9000;
+// Free shipping thresholds (products subtotal) in cents.
+// France: 90,00 EUR — Europe: 120,00 EUR
+const SIMONE_FREE_SHIPPING_THRESHOLD_FR_CENTS = 9000;
+const SIMONE_FREE_SHIPPING_THRESHOLD_EU_CENTS = 12000;
+
+function getSelectedCheckoutCountry() {
+  const sel = document.getElementById("checkoutCountry");
+  const raw = sel && typeof sel.value === "string" ? sel.value : "FR";
+  const c = String(raw || "FR").trim().toUpperCase();
+  return c || "FR";
+}
+
+function getFreeShippingThresholdCentsForCountry(countryCode) {
+  const c = String(countryCode || "FR").trim().toUpperCase();
+  return c === "FR" ? SIMONE_FREE_SHIPPING_THRESHOLD_FR_CENTS : SIMONE_FREE_SHIPPING_THRESHOLD_EU_CENTS;
+}
 
 function updateFreeShippingNote() {
   const el = document.getElementById("freeShippingNote");
   if (!el) return;
-  const threshold = formatEUR(centsToEuros(SIMONE_FREE_SHIPPING_THRESHOLD_CENTS));
+  const thresholdCents = getFreeShippingThresholdCentsForCountry(getSelectedCheckoutCountry());
+  const threshold = formatEUR(centsToEuros(thresholdCents));
   el.textContent = `Livraison offerte dès ${threshold}.`;
 }
 
@@ -58,6 +73,69 @@ const SIMONE_HOME_RATES = [
   { max_weight_grams: 25000, amount_cents: 3583 },
 ];
 
+// Home delivery rates (Europe) — amounts in cents.
+// Source: "Tarifs professionnels à Domicile HT applicables 7 Janvier 2026".
+const SIMONE_HOME_RATES_BY_ZONE = {
+  // Belgique + Luxembourg
+  BE_LU: [
+    { max_weight_grams: 250, amount_cents: 992 },
+    { max_weight_grams: 500, amount_cents: 992 },
+    { max_weight_grams: 1000, amount_cents: 992 },
+    { max_weight_grams: 2000, amount_cents: 1172 },
+    { max_weight_grams: 5000, amount_cents: 1372 },
+    { max_weight_grams: 10000, amount_cents: 2103 },
+    { max_weight_grams: 15000, amount_cents: 2654 },
+    { max_weight_grams: 25000, amount_cents: 3623 },
+    { max_weight_grams: 30000, amount_cents: 3623 },
+  ],
+  // Pays-Bas + Allemagne
+  NL_DE: [
+    { max_weight_grams: 250, amount_cents: 992 },
+    { max_weight_grams: 500, amount_cents: 992 },
+    { max_weight_grams: 1000, amount_cents: 992 },
+    { max_weight_grams: 2000, amount_cents: 1172 },
+    { max_weight_grams: 5000, amount_cents: 1372 },
+    { max_weight_grams: 10000, amount_cents: 2103 },
+    { max_weight_grams: 15000, amount_cents: 2654 },
+    { max_weight_grams: 25000, amount_cents: 3623 },
+    { max_weight_grams: 30000, amount_cents: 3623 },
+  ],
+  // Espagne + Portugal + Italie
+  ES_PT_IT: [
+    { max_weight_grams: 250, amount_cents: 1012 },
+    { max_weight_grams: 500, amount_cents: 1012 },
+    { max_weight_grams: 1000, amount_cents: 1012 },
+    { max_weight_grams: 2000, amount_cents: 1192 },
+    { max_weight_grams: 5000, amount_cents: 1392 },
+    { max_weight_grams: 10000, amount_cents: 2123 },
+    { max_weight_grams: 15000, amount_cents: 2674 },
+    { max_weight_grams: 25000, amount_cents: 3643 },
+    { max_weight_grams: 30000, amount_cents: 3643 },
+  ],
+  // Autriche
+  AT: [
+    { max_weight_grams: 250, amount_cents: 1272 },
+    { max_weight_grams: 500, amount_cents: 1272 },
+    { max_weight_grams: 1000, amount_cents: 1272 },
+    { max_weight_grams: 2000, amount_cents: 1422 },
+    { max_weight_grams: 5000, amount_cents: 1682 },
+    { max_weight_grams: 10000, amount_cents: 2343 },
+    { max_weight_grams: 15000, amount_cents: 3264 },
+    { max_weight_grams: 25000, amount_cents: 4223 },
+    { max_weight_grams: 30000, amount_cents: 4223 },
+  ],
+};
+
+function getHomeRatesForCountry(countryCode) {
+  const c = String(countryCode || "FR").trim().toUpperCase();
+  if (c === "FR") return SIMONE_HOME_RATES;
+  if (c === "BE" || c === "LU") return SIMONE_HOME_RATES_BY_ZONE.BE_LU;
+  if (c === "NL" || c === "DE") return SIMONE_HOME_RATES_BY_ZONE.NL_DE;
+  if (c === "ES" || c === "PT" || c === "IT") return SIMONE_HOME_RATES_BY_ZONE.ES_PT_IT;
+  if (c === "AT") return SIMONE_HOME_RATES_BY_ZONE.AT;
+  return SIMONE_HOME_RATES;
+}
+
 // Packed weights (grams) used for display estimation.
 const SIMONE_WEIGHTS_BY_PRICE_ID = {
   "price_1T4LB60XZVE1puxSTKgblJPz": 120, // 30 ml
@@ -85,7 +163,10 @@ function centsToEuros(cents) {
 function getSelectedShippingMethod() {
   const el = document.querySelector('input[name="shippingMethod"]:checked');
   const v = el && typeof el.value === "string" ? String(el.value || "").trim() : "home";
-  return (v === "mondial_relay" || v === "home") ? v : "home";
+  const method = (v === "mondial_relay" || v === "home") ? v : "home";
+  // Mondial Relay is France-only.
+  if (method === "mondial_relay" && getSelectedCheckoutCountry() !== "FR") return "home";
+  return method;
 }
 
 function getPriceIdFromCartItem(item) {
@@ -162,13 +243,15 @@ function updateCartTotalsDisplay(cart, subtotalCents) {
   if (!totalEl) return;
 
   const method = getSelectedShippingMethod();
+  const country = getSelectedCheckoutCountry();
   const weightGrams = computeCartWeightGrams(cart);
   const rawShippingCents = method === "mondial_relay"
     ? computeShippingCentsFromRates(weightGrams, SIMONE_MR_RATES)
-    : computeShippingCentsFromRates(weightGrams, SIMONE_HOME_RATES);
+    : computeShippingCentsFromRates(weightGrams, getHomeRatesForCountry(country));
 
   const subtotal = Math.max(0, Number(subtotalCents) || 0);
-  const shippingCents = subtotal >= SIMONE_FREE_SHIPPING_THRESHOLD_CENTS ? 0 : rawShippingCents;
+  const thresholdCents = getFreeShippingThresholdCentsForCountry(country);
+  const shippingCents = subtotal >= thresholdCents ? 0 : rawShippingCents;
 
   const totalCents = Math.max(0, subtotal + shippingCents);
 
@@ -537,6 +620,7 @@ async function checkout(buttonEl) {
   const address2Input = document.getElementById("checkoutAddress2");
   const postalInput = document.getElementById("checkoutPostal");
   const cityInput = document.getElementById("checkoutCity");
+  const countryInput = document.getElementById("checkoutCountry");
 
   const email = emailInput && typeof emailInput.value === "string" ? emailInput.value.trim() : "";
   const fullName = nameInput && typeof nameInput.value === "string" ? nameInput.value.trim() : "";
@@ -545,6 +629,7 @@ async function checkout(buttonEl) {
   const address2 = address2Input && typeof address2Input.value === "string" ? address2Input.value.trim() : "";
   const postal = postalInput && typeof postalInput.value === "string" ? postalInput.value.trim() : "";
   const city = cityInput && typeof cityInput.value === "string" ? cityInput.value.trim() : "";
+  const country = countryInput && typeof countryInput.value === "string" ? countryInput.value.trim().toUpperCase() : getSelectedCheckoutCountry();
 
   const shippingMethodEl = document.querySelector('input[name="shippingMethod"]:checked');
   const shippingMethod = shippingMethodEl && typeof shippingMethodEl.value === "string" ? String(shippingMethodEl.value || "").trim() : "home";
@@ -572,6 +657,7 @@ async function checkout(buttonEl) {
     if (address2Input) localStorage.setItem("checkout_address2", address2);
     if (postalInput) localStorage.setItem("checkout_postal", postal);
     if (cityInput) localStorage.setItem("checkout_city", city);
+    if (countryInput) localStorage.setItem("checkout_country", country);
     localStorage.setItem("checkout_shipping_method", shippingMethod);
     if (shippingMethod === "mondial_relay") {
       localStorage.setItem("mr_relay", JSON.stringify(mrRelay));
@@ -641,6 +727,15 @@ async function checkout(buttonEl) {
       if (originalLabel != null) btn.textContent = originalLabel;
     }
     cityInput.focus();
+    return;
+  }
+
+  if (shippingMethod === "mondial_relay" && country !== "FR") {
+    alert("Mondial Relay est disponible uniquement en France. Sélectionne Livraison à domicile pour l’Europe.");
+    if (btn) {
+      btn.disabled = false;
+      if (originalLabel != null) btn.textContent = originalLabel;
+    }
     return;
   }
 
@@ -750,7 +845,7 @@ async function checkout(buttonEl) {
             line2: address2 || undefined,
             postal_code: postal,
             city: city,
-            country: "FR"
+            country: country
           }
         }
       }),
@@ -818,7 +913,14 @@ window.checkout = checkout;
 
     function toggleMr() {
       const method = getCheckedMethod();
-      const show = method === "mondial_relay";
+      const selectedCountry = getSelectedCheckoutCountry();
+      const show = method === "mondial_relay" && selectedCountry === "FR";
+
+      // If user selected MR but country is not France, force back to home.
+      if (method === "mondial_relay" && selectedCountry !== "FR") {
+        const homeInput = document.querySelector('input[name="shippingMethod"][value="home"]');
+        if (homeInput) homeInput.checked = true;
+      }
       mrBox.hidden = !show;
       setMrRequired(show);
 
@@ -988,6 +1090,27 @@ window.checkout = checkout;
       });
     });
 
+    // Country impacts eligibility (MR) and shipping rates.
+    const countrySel = document.getElementById("checkoutCountry");
+    if (countrySel) {
+      countrySel.addEventListener("change", () => {
+        try {
+          localStorage.setItem("checkout_country", getSelectedCheckoutCountry());
+        } catch {
+          // ignore
+        }
+        toggleMr();
+        try {
+          const cart = loadCart();
+          let subtotalCents = 0;
+          for (const item of cart) subtotalCents += eurosToCents(item && typeof item === "object" ? item.price : 0);
+          updateCartTotalsDisplay(cart, subtotalCents);
+        } catch {
+          // ignore
+        }
+      });
+    }
+
     toggleMr();
   } catch {
     // ignore
@@ -1003,6 +1126,7 @@ try {
   const address2Input = document.getElementById("checkoutAddress2");
   const postalInput = document.getElementById("checkoutPostal");
   const cityInput = document.getElementById("checkoutCity");
+  const countryInput = document.getElementById("checkoutCountry");
 
   if (emailInput && !emailInput.value) {
     const saved = localStorage.getItem("checkout_email");
@@ -1031,6 +1155,22 @@ try {
   if (cityInput && !cityInput.value) {
     const saved = localStorage.getItem("checkout_city");
     if (saved) cityInput.value = saved;
+  }
+
+  if (countryInput) {
+    const saved = localStorage.getItem("checkout_country");
+    if (saved) {
+      const next = String(saved).trim().toUpperCase();
+      const prev = String(countryInput.value || "").trim().toUpperCase();
+      if (next && next !== prev) {
+        countryInput.value = next;
+        try {
+          countryInput.dispatchEvent(new Event("change"));
+        } catch {
+          // ignore
+        }
+      }
+    }
   }
 } catch {
   // ignore

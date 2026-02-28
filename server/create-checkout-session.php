@@ -269,11 +269,87 @@ function compute_home_shipping_cents(int $weightGrams, array $config): ?int {
     return (int)$normalized[count($normalized) - 1]['amount'];
 }
 
+function compute_home_shipping_cents_by_country(int $weightGrams, string $country, array $config): ?int {
+    $c = strtoupper(trim($country));
+    if ($c === '') $c = 'FR';
+
+    // France uses configured rates (if present)
+    if ($c === 'FR') {
+        $v = compute_home_shipping_cents($weightGrams, $config);
+        if ($v !== null) return $v;
+    }
+
+    // Europe table (HT) — 7 Janvier 2026
+    // Groups: BE/LU, NL/DE, ES/PT/IT, AT
+    $ratesByGroup = [
+        'BE_LU' => [
+            ['max_weight_grams' => 250, 'amount_cents' => 992],
+            ['max_weight_grams' => 500, 'amount_cents' => 992],
+            ['max_weight_grams' => 1000, 'amount_cents' => 992],
+            ['max_weight_grams' => 2000, 'amount_cents' => 1172],
+            ['max_weight_grams' => 5000, 'amount_cents' => 1372],
+            ['max_weight_grams' => 10000, 'amount_cents' => 2103],
+            ['max_weight_grams' => 15000, 'amount_cents' => 2654],
+            ['max_weight_grams' => 25000, 'amount_cents' => 3623],
+            ['max_weight_grams' => 30000, 'amount_cents' => 3623],
+        ],
+        'NL_DE' => [
+            ['max_weight_grams' => 250, 'amount_cents' => 992],
+            ['max_weight_grams' => 500, 'amount_cents' => 992],
+            ['max_weight_grams' => 1000, 'amount_cents' => 992],
+            ['max_weight_grams' => 2000, 'amount_cents' => 1172],
+            ['max_weight_grams' => 5000, 'amount_cents' => 1372],
+            ['max_weight_grams' => 10000, 'amount_cents' => 2103],
+            ['max_weight_grams' => 15000, 'amount_cents' => 2654],
+            ['max_weight_grams' => 25000, 'amount_cents' => 3623],
+            ['max_weight_grams' => 30000, 'amount_cents' => 3623],
+        ],
+        'ES_PT_IT' => [
+            ['max_weight_grams' => 250, 'amount_cents' => 1012],
+            ['max_weight_grams' => 500, 'amount_cents' => 1012],
+            ['max_weight_grams' => 1000, 'amount_cents' => 1012],
+            ['max_weight_grams' => 2000, 'amount_cents' => 1192],
+            ['max_weight_grams' => 5000, 'amount_cents' => 1392],
+            ['max_weight_grams' => 10000, 'amount_cents' => 2123],
+            ['max_weight_grams' => 15000, 'amount_cents' => 2674],
+            ['max_weight_grams' => 25000, 'amount_cents' => 3643],
+            ['max_weight_grams' => 30000, 'amount_cents' => 3643],
+        ],
+        'AT' => [
+            ['max_weight_grams' => 250, 'amount_cents' => 1272],
+            ['max_weight_grams' => 500, 'amount_cents' => 1272],
+            ['max_weight_grams' => 1000, 'amount_cents' => 1272],
+            ['max_weight_grams' => 2000, 'amount_cents' => 1422],
+            ['max_weight_grams' => 5000, 'amount_cents' => 1682],
+            ['max_weight_grams' => 10000, 'amount_cents' => 2343],
+            ['max_weight_grams' => 15000, 'amount_cents' => 3264],
+            ['max_weight_grams' => 25000, 'amount_cents' => 4223],
+            ['max_weight_grams' => 30000, 'amount_cents' => 4223],
+        ],
+    ];
+
+    $group = null;
+    if ($c === 'BE' || $c === 'LU') $group = 'BE_LU';
+    if ($c === 'NL' || $c === 'DE') $group = 'NL_DE';
+    if ($c === 'ES' || $c === 'PT' || $c === 'IT') $group = 'ES_PT_IT';
+    if ($c === 'AT') $group = 'AT';
+
+    if ($group === null) {
+        // Unknown country: default to France rates (or 0 if missing)
+        return compute_home_shipping_cents($weightGrams, $config) ?? 0;
+    }
+
+    // Reuse existing bracket logic by temporarily overriding config.
+    $tmp = $config;
+    $tmp['home_shipping_rates'] = $ratesByGroup[$group];
+    return compute_home_shipping_cents($weightGrams, $tmp);
+}
+
 function load_config(): array {
     $default = [
         'stripe_secret_key' => getenv('STRIPE_SECRET_KEY') ?: '',
         'allowed_price_ids' => [],
-        'allowed_countries' => ['FR'],
+        'allowed_countries' => ['FR', 'BE', 'LU', 'NL', 'DE', 'ES', 'PT', 'IT', 'AT'],
         'shipping_rate_ids' => [],
         'allow_promotion_codes' => true,
         // Default free-shipping threshold: 90,00 EUR (in cents)
@@ -439,6 +515,23 @@ if (!is_array($shipping)) {
     $shipping = null;
 }
 
+$shippingCountry = 'FR';
+if (is_array($shipping) && is_array($shipping['address'] ?? null)) {
+    $country = normalize_string($shipping['address']['country'] ?? null);
+    if (is_string($country) && trim($country) !== '') {
+        $shippingCountry = strtoupper(trim($country));
+    }
+}
+
+$supportedCountries = ['FR', 'BE', 'LU', 'NL', 'DE', 'ES', 'PT', 'IT', 'AT'];
+$allowedCountries = $config['allowed_countries'] ?? [];
+if (!is_array($allowedCountries)) $allowedCountries = [];
+$allowedCountries = array_values(array_unique(array_merge($supportedCountries, $allowedCountries)));
+if (!in_array($shippingCountry, $allowedCountries, true)) {
+    append_checkout_log(['req_id' => $reqId, 'stage' => 'country_not_allowed', 'country' => $shippingCountry]);
+    json_response(400, ['error' => 'Pays non pris en charge pour la livraison']);
+}
+
 $shippingMethod = $payload['shipping_method'] ?? null;
 $shippingMethod = normalize_string($shippingMethod) ?? 'home';
 if ($shippingMethod !== 'home' && $shippingMethod !== 'mondial_relay') {
@@ -561,6 +654,12 @@ $cartSubtotalCents = null;
 $freeShippingThresholdCents = (int)($config['free_shipping_threshold_cents'] ?? 9000);
 if ($freeShippingThresholdCents < 0) $freeShippingThresholdCents = 0;
 
+// Europe threshold override (default 120,00 EUR) when not France.
+if ($shippingCountry !== 'FR') {
+    $euThreshold = (int)($config['free_shipping_threshold_eu_cents'] ?? 12000);
+    if ($euThreshold > 0) $freeShippingThresholdCents = $euThreshold;
+}
+
 if ($freeShippingThresholdCents > 0) {
     $cartSubtotalCents = compute_cart_subtotal_cents_via_stripe($lineItems, $secretKey);
 
@@ -583,6 +682,9 @@ if ($freeShippingThresholdCents > 0) {
 
 $isFreeShipping = ($freeShippingThresholdCents > 0 && $cartSubtotalCents !== null && $cartSubtotalCents >= $freeShippingThresholdCents);
 if ($shippingMethod === 'mondial_relay') {
+    if ($shippingCountry !== 'FR') {
+        json_response(400, ['error' => 'Mondial Relay est disponible uniquement en France']);
+    }
     if (!is_array($mondialRelay)) {
         json_response(400, ['error' => 'Missing Mondial Relay Point Relais selection']);
     }
@@ -645,7 +747,7 @@ if ($shippingMethod === 'home') {
         : 'eur';
 
     $cartWeightGrams = compute_cart_weight_grams($lineItems, $config);
-    $homeShippingCents = $isFreeShipping ? 0 : compute_home_shipping_cents($cartWeightGrams, $config);
+    $homeShippingCents = $isFreeShipping ? 0 : compute_home_shipping_cents_by_country($cartWeightGrams, $shippingCountry, $config);
     if ($homeShippingCents === null) {
         // If not configured, default to 0 to avoid blocking checkout.
         $homeShippingCents = 0;
@@ -723,6 +825,7 @@ $params = [
 // Attach minimal metadata for fulfillment (also visible in webhook payload).
 $metadata = [];
 $metadata['shipping_method'] = $shippingMethod;
+$metadata['shipping_country'] = $shippingCountry;
 if ($cartSubtotalCents !== null) {
     $metadata['cart_subtotal_cents'] = (string)$cartSubtotalCents;
 }

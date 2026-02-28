@@ -13,10 +13,10 @@
 
 
   <!-- CSS -->
-  <link rel="stylesheet" href="assets/css/style.css?v=20260228-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=20260228-2">
 
   <!-- JS -->
-  <script src="assets/js/shop.js?v=20260228-1" defer></script>
+  <script src="assets/js/shop.js?v=20260228-3" defer></script>
   <script src="assets/js/newsletter.js" defer></script>
 
 </head>
@@ -123,6 +123,24 @@
             <label for="checkoutCity">Ville</label>
             <input id="checkoutCity" type="text" autocomplete="shipping address-level2" placeholder="Paris" required>
           </div>
+        </div>
+
+        <div class="checkout-contact-row">
+          <div>
+            <label for="checkoutCountry">Pays</label>
+            <select id="checkoutCountry" autocomplete="shipping country" required>
+              <option value="FR">France</option>
+              <option value="BE">Belgique</option>
+              <option value="LU">Luxembourg</option>
+              <option value="NL">Pays-Bas</option>
+              <option value="DE">Allemagne</option>
+              <option value="ES">Espagne</option>
+              <option value="PT">Portugal</option>
+              <option value="IT">Italie</option>
+              <option value="AT">Autriche</option>
+            </select>
+          </div>
+          <div></div>
         </div>
 
         <div class="checkout-shipping" aria-label="Mode de livraison">

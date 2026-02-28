@@ -31,7 +31,8 @@ return [
 
     // Shipping address collection (Checkout)
     // Example: ['FR', 'BE', 'DE']
-    'allowed_countries' => ['FR'],
+    // Note: this project supports FR + a small list of EU countries by default.
+    'allowed_countries' => ['FR', 'BE', 'LU', 'NL', 'DE', 'ES', 'PT', 'IT', 'AT'],
 
     // Optional: shipping rate IDs created in Stripe Dashboard (Shipping rates)
     // Example: ['shr_123', 'shr_456']
@@ -58,6 +59,10 @@ return [
     // Optional: free shipping threshold (products subtotal, in cents).
     // Example: 9000 means free shipping from 90.00 EUR.
     'free_shipping_threshold_cents' => 9000,
+
+    // Optional: free shipping threshold for Europe (non-FR), in cents.
+    // Example: 12000 means free shipping from 120.00 EUR.
+    'free_shipping_threshold_eu_cents' => 12000,
 
     // Mondial Relay shipping brackets (France only in this project).
     // First matching bracket where weight <= max_weight_grams is used.

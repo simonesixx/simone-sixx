@@ -832,7 +832,8 @@ body.home .site-footer {
   margin-top: 0;
 }
 
-.checkout-contact input {
+.checkout-contact input,
+.checkout-contact select {
   width: 100%;
   background: none;
   border: none;
