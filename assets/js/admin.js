@@ -607,6 +607,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const articleSubmitBtn = document.getElementById("articleSubmitBtn");
   const articleCancelBtn = document.getElementById("articleCancelBtn");
   const articleFormSection = document.getElementById("articleFormSection");
+  const articleImageFileInput = document.getElementById("articleImageFile");
+  const articleImagesFilesInput = document.getElementById("articleImagesFiles");
 
   let editingArticleIndex = null;
 
@@ -955,6 +957,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   articleCancelBtn?.addEventListener("click", cancelEditArticle);
+
+  articleImageFileInput?.addEventListener("change", (e) => {
+    const target = document.getElementById("articleImage");
+    if (!target) return;
+    const file = e.target?.files?.[0];
+    const name = file ? String(file.name || "").trim() : "";
+    if (!name) return;
+    target.value = name;
+  });
+
+  articleImagesFilesInput?.addEventListener("change", (e) => {
+    const textarea = document.getElementById("articleImages");
+    if (!textarea) return;
+
+    const files = Array.from(e.target?.files || []).filter(Boolean);
+    const names = files
+      .filter((f) => !f.type || String(f.type).startsWith("image/"))
+      .map((f) => String(f.name || "").trim())
+      .filter(Boolean);
+
+    textarea.value = Array.from(new Set(names)).join("\n");
+  });
 
   articleForm?.addEventListener("submit", (e) => {
     e.preventDefault();
