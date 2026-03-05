@@ -21,7 +21,7 @@ function simone_inventory_default_items(): array {
     return [
         'price_1T4LB60XZVE1puxSTKgblJPz' => [
             'label' => 'Parfum 30 ml',
-            'stock' => 4,
+            'stock' => 3,
         ],
     ];
 }
@@ -75,8 +75,18 @@ function simone_inventory_open_locked(array $config): array {
         if (!isset($data['items'][$priceId]['label']) && isset($row['label'])) {
             $data['items'][$priceId]['label'] = (string)$row['label'];
         }
-        if (!isset($data['items'][$priceId]['stock']) && isset($row['stock'])) {
-            $data['items'][$priceId]['stock'] = (int)$row['stock'];
+        if (isset($row['stock'])) {
+            $defaultStock = (int)$row['stock'];
+            if (!isset($data['items'][$priceId]['stock'])) {
+                $data['items'][$priceId]['stock'] = $defaultStock;
+            } else {
+                $currentStock = $data['items'][$priceId]['stock'];
+                $currentInt = is_int($currentStock) ? $currentStock : (is_numeric($currentStock) ? (int)$currentStock : null);
+                if (is_int($currentInt) && $currentInt > $defaultStock) {
+                    // If the inventory file was created with an older default, cap it.
+                    $data['items'][$priceId]['stock'] = $defaultStock;
+                }
+            }
         }
         if (!array_key_exists($priceId, $data['sold'])) {
             $data['sold'][$priceId] = 0;
