@@ -167,18 +167,6 @@ function getHomeRatesForCountry(countryCode) {
   return SIMONE_HOME_RATES;
 }
 
-// Packed weights (grams) used for display estimation.
-const SIMONE_WEIGHTS_BY_PRICE_ID = {
-  "price_1T4LB60XZVE1puxSTKgblJPz": 120, // 30 ml
-  "price_1T4Vko0XZVE1puxSJUSVeBjD": 140, // 50 ml
-};
-
-const SIMONE_LEGACY_PRICE_ID_MAP = new Map([
-  // Live → Test (si un ancien panier a été créé en live)
-  ["price_1T4Ypg1pW7akGXOM8wnRfRar", "price_1T4LB60XZVE1puxSTKgblJPz"], // 30 ml
-  ["price_1T4Yph1pW7akGXOM9qTPSGtH", "price_1T4Vko0XZVE1puxSJUSVeBjD"], // 50 ml
-]);
-
 function eurosToCents(value) {
   const n = typeof value === "number" ? value : Number(String(value || "").replace(",", "."));
   if (!Number.isFinite(n)) return 0;
@@ -202,21 +190,7 @@ function getSelectedShippingMethod() {
 
 function getPriceIdFromCartItem(item) {
   if (!item || typeof item !== "object") return null;
-  let priceId = item.stripePriceId || item.priceId || null;
-  if (priceId && SIMONE_LEGACY_PRICE_ID_MAP.has(priceId)) {
-    priceId = SIMONE_LEGACY_PRICE_ID_MAP.get(priceId);
-  }
-
-  // Compat: si un ancien panier / une ancienne page n'a pas l'attribut `stripePriceId`
-  if (!priceId) {
-    const name = String(item.name || "").toLowerCase();
-    const format = String(item.format || item.size || "").toLowerCase().trim();
-    if (name.includes("la chambre du sixième étage") || name.includes("la chambre du sixieme etage")) {
-      if (format === "30 ml" || format === "30ml") return "price_1T4LB60XZVE1puxSTKgblJPz";
-      if (format === "50 ml" || format === "50ml") return "price_1T4Vko0XZVE1puxSJUSVeBjD";
-    }
-  }
-
+  const priceId = item.stripePriceId || item.priceId || null;
   return typeof priceId === "string" && priceId.trim() ? priceId.trim() : null;
 }
 
@@ -229,11 +203,6 @@ function computeCartWeightGrams(cart) {
       total += Math.round(directWeight);
       continue;
     }
-
-    const priceId = getPriceIdFromCartItem(item);
-    if (!priceId) continue;
-    const w = SIMONE_WEIGHTS_BY_PRICE_ID[priceId];
-    if (typeof w === "number" && Number.isFinite(w) && w > 0) total += w;
   }
   return total;
 }
@@ -921,33 +890,9 @@ async function checkout(buttonEl) {
     }
   }
 
-  // On attend des items avec `stripePriceId` (Price ID Stripe) pour chaque ligne.
-  // Ex: price_123...
-  const legacyPriceIdMap = SIMONE_LEGACY_PRICE_ID_MAP;
-
   const countsByPriceId = new Map();
   for (const item of cart) {
     let priceId = item && typeof item === "object" ? (item.stripePriceId || item.priceId) : null;
-
-    // Si un ancien panier contient un Price ID obsolète, on le traduit.
-    if (priceId && legacyPriceIdMap.has(priceId)) {
-      priceId = legacyPriceIdMap.get(priceId);
-    }
-
-    // Compat: si un ancien panier / une ancienne page n'a pas l'attribut `data-stripe-price-id`
-    // on déduit l'ID Stripe du parfum via son format.
-    if (!priceId && item && typeof item === "object") {
-      const name = String(item.name || "").toLowerCase();
-      const format = String(item.format || item.size || "").toLowerCase().trim();
-
-      if (name.includes("la chambre du sixième étage") || name.includes("la chambre du sixieme etage")) {
-        if (format === "30 ml" || format === "30ml") {
-          priceId = "price_1T4LB60XZVE1puxSTKgblJPz";
-        } else if (format === "50 ml" || format === "50ml") {
-          priceId = "price_1T4Vko0XZVE1puxSJUSVeBjD";
-        }
-      }
-    }
 
     if (!priceId) {
       alert("Paiement non configuré : il manque l’ID Stripe (price_...) pour un article du panier.");
@@ -957,6 +902,16 @@ async function checkout(buttonEl) {
       }
       return;
     }
+
+    if (typeof priceId !== "string" || !String(priceId).trim()) {
+      alert("Paiement non configuré : l’ID Stripe (price_...) est invalide pour un article du panier.");
+      if (btn) {
+        btn.disabled = false;
+        if (originalLabel != null) btn.textContent = originalLabel;
+      }
+      return;
+    }
+
     countsByPriceId.set(priceId, (countsByPriceId.get(priceId) || 0) + 1);
   }
 
