@@ -19,7 +19,7 @@ function simone_inventory_default_items(): array {
     // Stock-limited item: Parfum 30 ml
     // Stripe Price ID used in the site.
     return [
-        'price_1T4LB60XZVE1puxSTKgblJPz' => [
+        'price_1T4Ypg1pW7akGXOM8wnRfRar' => [
             'label' => 'Parfum 30 ml',
             'stock' => 3,
         ],
